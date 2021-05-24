@@ -5,7 +5,6 @@ contract khron_logger {
     
     event Transfer (address indexed _to, string data);
 
-    
     function checking() public pure returns(bytes4) {
         return this.transfer_eth.selector;
     }
