@@ -30,8 +30,5 @@ def log_loop(event_filter, poll_interval):
             handle_event(event)
             time.sleep(poll_interval)
 
-def checking():
-    return contract.abi
-
 block_filter = web3_connection.eth.filter({'fromBlock':'latest', 'address':contractAddress})
 log_loop(block_filter, 2)
