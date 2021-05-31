@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >0.6.0 <0.8.0;
+pragma solidity >=0.6.0 <=0.8.0;
 
 import "./abstracts/KhronERC20.sol";
 import "./abstracts/ERC677Token.sol";
