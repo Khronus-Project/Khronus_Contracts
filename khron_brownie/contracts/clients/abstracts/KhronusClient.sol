@@ -23,7 +23,6 @@ abstract contract KhronusClient {
         external
         returns (bool)
         {
-            return khronus.transferAndCall(khronNode,khronFee,data);
+            return khronus.transferAndCall(khronNode,khronFee, data);
         }
-
 }
