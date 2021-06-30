@@ -7,6 +7,5 @@ build/
 reports/
 data.txt
 .env
-contract_library/contract_addresses.json
 contract_library/contract_addresses_ext.json
 use_case_test.sol

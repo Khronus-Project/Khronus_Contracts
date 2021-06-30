@@ -12,4 +12,7 @@ The Khronus protocol contracts are the following.
 - The khron_brownie folder contains all the contracts. To interact with the contracts you need an Ethereum compatible network, either in a real testnet or through a local mock network through Ganache https://www.trufflesuite.com/ganache. 
 - To install ganache and connected to the brownie environent follow the steps in the following video. https://www.youtube.com/watch?v=yJQJ7pw_9C0
 - Once the network is configured the scripts to interact with the current demo will work. First run the 'brownie run event_prep.py' and then "brownie run send_events.py" you will see the logs of the transaction shown, if the node application is active, and listening to the right contract address the listener will react accordingly populating its database.
-- The folder Contract Library and the other scripts are related to deployments in live testnets and not relevant to the development environment.
+- Every time that the 'brownie run event_prep.py' command runs the file contract_addresses in contract_library populates with the updated addresses that contain the current contracts, the node address needs to be copied to the .env file of the node application.
+- The folder Contract_Library/ROPSTEN_DEPLOYMENTS and the other scripts are related to deployments in live testnets and not relevant to the development environment.
+- The file contract_addresses in contract_library populates 
+- The listner repository should be created under the same parent directory as the Contract repository for the demo to work properly.
