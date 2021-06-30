@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >0.6.0 <0.8.0;
+pragma solidity ^0.8.0;
 
 /* @dev this is used to build a token contract object in the client contract 
 in order to send the call the TransferFrom function
