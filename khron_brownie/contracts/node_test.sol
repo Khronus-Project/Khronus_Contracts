@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./node_base/KhronusNode.sol";
+import "contracts/KhronusNodeBase.sol";
 
 contract TestKhronusNode is KhronusNode {
 }
