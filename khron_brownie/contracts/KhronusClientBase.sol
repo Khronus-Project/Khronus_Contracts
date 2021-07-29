@@ -14,7 +14,7 @@ address khronusCoordinator;
         KhronusCoordinator = KhronusCoordinatorInterface(_khronusCoordinator);
     }
 
-    function requestKhronTab(uint _timeStamp, uint _iterations, string memory _khronTab) internal returns (bytes32){
+    function requestKhronTab(uint256 _timeStamp, uint256 _iterations, string memory _khronTab) internal returns (bytes32){
         return KhronusCoordinator.requestKhronTab(_timeStamp, _iterations, _khronTab);
     }
 
