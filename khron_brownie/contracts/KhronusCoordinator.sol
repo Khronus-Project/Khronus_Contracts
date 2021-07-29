@@ -23,14 +23,15 @@ contract KhronusCoordinator is Ownable{
 
     // Data Variables
 
-    uint callPrice;
+    uint256 callPrice;
+    uint256 registrationDeposit;
 
     struct clientContract {
         address owner;
-        uint credit;
-        uint nonce;
-        uint standing;
-        uint commitedFunds;
+        uint256 credit;
+        uint256 nonce;
+        uint256 standing;
+        uint256 commitedFunds;
     }
 
     mapping (address => clientContract) clientRegistry;
@@ -41,25 +42,41 @@ contract KhronusCoordinator is Ownable{
 
     // Business Logic Function Section
 
-    /* Set Price Function
+    /* Set Price Functions
     */
 
-    function setCallPrice(uint _callPrice) external onlyOwner returns(bool){
+    function setCallPrice(uint256 _callPrice) external onlyOwner returns(bool){
         callPrice = _callPrice;
         return true;
     }
 
-     /* Fund Client Contract function
+     function setRegistrationDeposit(uint256 _registrationDeposit) external onlyOwner returns(bool){
+        registrationDeposit = _registrationDeposit;
+        return true;
+    }
+
+     /* Client and Node Contract Interaction Functions
     */
-    function fundClient(address _clientContract, uint256 _deposit) external returns(bool){
+
+    function registerClient(address _clientContract, uint256 _deposit) external returns (bool){
+        require(_deposit >= registrationDeposit, "Need to deposit the minimum amount of Khron");
         address _owner = msg.sender;
-        require (khronus.balanceOf(_owner) >= _deposit, "Not enough funds to transfer");
-        require (khronus.allowance(_owner, address(this)) >= _deposit, "Not enough allowance to transfer funds");
-        khronus.transferFrom(_owner, address(this), _deposit);
         clientRegistry[_clientContract].owner = _owner;
+        _fundClient(_owner, _clientContract, _deposit);
+    }
+    
+    function _fundClient(address _ownerAddress, address _clientContract, uint256 _deposit) internal{
+        require (clientRegistry[_clientContract].owner == _ownerAddress, "only owner can fund");
+        require (khronus.balanceOf(_ownerAddress) >= _deposit, "Not enough funds to transfer");
+        require (khronus.allowance(_ownerAddress, address(this)) >= _deposit, "Not enough allowance to transfer funds");
+        khronus.transferFrom(_ownerAddress, address(this), _deposit);
         clientRegistry[_clientContract].credit += _deposit;
-        khronus.increaseApproval(_owner, _deposit);
-        emit ClientFunded(_clientContract, _owner, _deposit);
+        khronus.increaseApproval(_ownerAddress, _deposit);
+        emit ClientFunded(_clientContract, _ownerAddress, _deposit);
+    }
+    
+    function fundClient(address _clientContract, uint256 _deposit) external returns(bool){
+        _fundClient(msg.sender, _clientContract, _deposit);
         return true;
     }
 
@@ -79,8 +96,8 @@ contract KhronusCoordinator is Ownable{
     }
 
     //set khron request
-    function requestKhronTab(uint _timeStamp, uint _iterations, string memory _khronTab) external returns(bytes32){
-        uint _requestCost = estimateKhron(TypeOfRequest.khronTab, _iterations);
+    function requestKhronTab(uint256 _timeStamp, uint256 _iterations, string memory _khronTab) external returns(bytes32){
+        uint256 _requestCost = estimateKhron(TypeOfRequest.khronTab, _iterations);
         address _requester = msg.sender;
         address _owner = clientRegistry[_requester].owner;
         require (clientRegistry[_requester].credit >= _requestCost, "Not enough funds in contract to set request");
@@ -109,7 +126,7 @@ contract KhronusCoordinator is Ownable{
         return clientRegistry[_clientContract].credit;
     }
 
-    function getCallPrice() public view returns (uint){
+    function getCallPrice() public view returns (uint256){
         return callPrice;
     }
 
