@@ -1,13 +1,12 @@
 import pytest
 from datetime import datetime
-from brownie import accounts, KhronusCoordinator, EscrowInfrastructure, KhronToken
-from testing_utils import logger, khron_constants
+from testing_utils import logger, khron_constants_client
 
 @pytest.fixture
 def constants():
-    return khron_constants()
+    return khron_constants_client()
 
-def test_registerClient(constants):
+def test_register_client(constants):
     # Set up constants for testing
     tokenContract = constants[0]
     coordinatorContract = constants[1]
@@ -30,7 +29,7 @@ def test_registerClient(constants):
     assert tokenContract.allowance(coordinatorContract.address, clientOwner.address) == clientOwnerAllowance + registrationDeposit
     assert coordinatorContract.creditOf(clientContract.address) == clientContractBalance + registrationDeposit
 
-def test_fundClient(constants):
+def test_fund_client(constants):
     # Set up constants for testing
     tokenContract = constants[0]
     coordinatorContract = constants[1]

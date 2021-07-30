@@ -12,7 +12,7 @@ contract KhronusCoordinator is Ownable{
     // Events
     event ClientFunded(address indexed _client, address indexed _requester, uint256 _amount);
     event RequestProcessed(address indexed _client, bytes32 _requestID, bytes _data);
-    
+    event NodeRegistered(address indexed _node, bytes32 _index);
     
     // Flag variables
 
@@ -25,7 +25,8 @@ contract KhronusCoordinator is Ownable{
 
     uint256 callPrice;
     uint256 registrationDeposit;
-
+    
+    // client registry
     struct clientContract {
         address owner;
         uint256 credit;
@@ -36,8 +37,27 @@ contract KhronusCoordinator is Ownable{
 
     mapping (address => clientContract) clientRegistry;
 
-    constructor () {
-        
+    // node registry
+
+    uint256 nodeCorrelative;
+    uint256 nodeNonce;
+
+    struct nodeContract {
+        uint256 requestsReceived;
+        uint256 requestsResponded;
+        uint256 requestFailed;
+        uint256 standing;
+        bool registered;
+    }
+
+    mapping (address => nodeContract) nodeRegistry;
+    mapping (bytes32 => address) nodeIndex;
+
+
+    constructor (address _khronAddress, uint256 _registrationDeposit,uint256 _callPrice) {
+        khronus = KhronTokenInterface(_khronAddress);
+        registrationDeposit = _registrationDeposit;
+        callPrice = _callPrice;
     }
 
     // Business Logic Function Section
@@ -55,7 +75,7 @@ contract KhronusCoordinator is Ownable{
         return true;
     }
 
-     /* Client and Node Contract Interaction Functions
+     /* Client registration
     */
 
     function registerClient(address _clientContract, uint256 _deposit) external returns (bool){
@@ -79,6 +99,19 @@ contract KhronusCoordinator is Ownable{
         _fundClient(msg.sender, _clientContract, _deposit);
         return true;
     }
+
+    /* Node registration functions
+    */
+
+    function registerNode(address _nodeAddress) external returns (bytes32){
+        require (nodeRegistry[_nodeAddress].registered == false);
+        bytes32 _index = keccak256(abi.encodePacked(nodeCorrelative,address(this)));
+        nodeIndex[_index] = _nodeAddress;
+        nodeCorrelative += 1;
+        nodeRegistry[_nodeAddress].registered = true;
+        emit NodeRegistered(_nodeAddress, _index);
+        return _index;
+    }   
 
     /* Request khronTab functions
     */
@@ -134,11 +167,15 @@ contract KhronusCoordinator is Ownable{
         return clientRegistry[_clientContract].commitedFunds;
     }
 
+    function getNodeFromIndex(bytes32 _index) public view returns(address){
+        return nodeIndex[_index];
+    }
     //Request to node functions
     function setKhronTokenAddress(
         address _khronAddress
         )
         external
+        onlyOwner
         returns (bool)
         {
             khronus = KhronTokenInterface(_khronAddress);
