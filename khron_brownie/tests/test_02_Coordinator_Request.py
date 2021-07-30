@@ -1,11 +1,11 @@
 import pytest
 from datetime import datetime
-from brownie import accounts, KhronusCoordinator, EscrowInfrastructure, KhronToken
-from testing_utils import logger, khron_constants
+from brownie import accounts
+from testing_utils import logger, khron_constants_client
 
 @pytest.fixture
 def constants():
-    return khron_constants()
+    return khron_constants_client()
 
 def test_sendKhronRequest(constants): 
     # Set up constants for testing
@@ -24,9 +24,11 @@ def test_sendKhronRequest(constants):
     # Set test
     clientCommitedFunds = coordinatorContract.commitedFundsOf(clientContract.address)
     clientOwnerAllowance = tokenContract.allowance(coordinatorContract.address, clientOwner.address)
-    escrowID = clientContract.openEscrow.call(escrowBeneficiary, timestamp, {'from':escrowDepositor})
-    requestID = coordinatorContract.requestKhronTab.call(timestamp, 1, "",{'from':clientContract})
+    #escrowID = clientContract.openEscrow.call(escrowBeneficiary, timestamp, {'from':escrowDepositor})
+    #requestID = coordinatorContract.requestKhronTab.call(timestamp, 1, "",{'from':clientContract})
     txt = clientContract.openEscrow(escrowBeneficiary, timestamp, {'from':escrowDepositor})
+    escrowID = txt.return_value
+    requestID = txt.events['RequestProcessed']['_requestID']
     #Test Log
     data = {'Test':'setKhronRequest','TestTime':datetime.utcnow().ctime(), 'TestingAddresses':{"Token":tokenContract.address, "Coordinator":coordinatorContract.address,"Client":clientContract.address}, "Events":dict(txt.events)}
     logger(data)
