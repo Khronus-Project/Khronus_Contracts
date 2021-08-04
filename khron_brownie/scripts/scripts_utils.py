@@ -13,3 +13,4 @@ def khron_constants_client():
     clientContract = EscrowInfrastructure.deploy(coordinatorContract.address,{'from':clientOwner})
     tokenContract.transfer(clientOwner.address, totalClientTokens,{'from':khronOwner})
     return (tokenContract, coordinatorContract, clientContract, khronOwner, clientOwner)
+    
