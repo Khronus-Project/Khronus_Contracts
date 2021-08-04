@@ -12,7 +12,9 @@ contract KhronusCoordinator is Ownable{
     // Events
     event ClientFunded(address indexed _client, address indexed _requester, uint256 _amount);
     event RequestProcessed(address indexed _client, bytes32 _requestID, bytes _data);
+    event AlertDispatched(bytes32 indexed _requestID,bytes32 _alertID, address[2] _assignedNodes);
     event NodeRegistered(address indexed _node, bytes32 _index);
+
     
     // Flag variables
 
@@ -21,12 +23,12 @@ contract KhronusCoordinator is Ownable{
         powerKhron
     }
 
-    // Data Variables
+    // # Data Variables
 
     uint256 callPrice;
     uint256 registrationDeposit;
     
-    // client registry
+    // ## client registry
     struct clientContract {
         address owner;
         uint256 credit;
@@ -37,10 +39,10 @@ contract KhronusCoordinator is Ownable{
 
     mapping (address => clientContract) clientRegistry;
 
-    // node registry
+    // ## node registry
 
-    uint256 nodeCorrelative;
-    uint256 nodeNonce;
+    uint256 public nodeCorrelative;
+    uint256 public nodeNonce;
 
     struct nodeContract {
         uint256 requestsReceived;
@@ -53,7 +55,26 @@ contract KhronusCoordinator is Ownable{
     mapping (address => nodeContract) nodeRegistry;
     mapping (bytes32 => address) nodeIndex;
 
+    // ## Requests and Alerts Registry
 
+    struct khronRequest {
+        uint256 iterations;
+        bool completed;
+        bool served;
+    }
+
+    mapping (bytes32 => khronRequest) requestRegistry;
+    
+    struct khronAlert {
+        bytes32 requestID;
+        uint256 timeStamp;
+        bool served;
+        address[2] servingNodes;
+    }
+
+    mapping (bytes32 => khronAlert) alertRegistry;
+
+    // contract contructor
     constructor (address _khronAddress, uint256 _registrationDeposit,uint256 _callPrice) {
         khronus = KhronTokenInterface(_khronAddress);
         registrationDeposit = _registrationDeposit;
@@ -138,8 +159,9 @@ contract KhronusCoordinator is Ownable{
         clientRegistry[_requester].commitedFunds += _requestCost;
         khronus.decreaseApproval(_owner, _requestCost);
         clientRegistry[_requester].nonce += 1;
+        requestRegistry[_requestID].iterations = _iterations;
         if (_iterations <= 1){
-            //create alert with the requestID
+           _setKhronAlert(_requestID, _timeStamp);
         }
         else{
             //request calendar with the requestID
@@ -148,13 +170,48 @@ contract KhronusCoordinator is Ownable{
         return _requestID;
     }
 
+    /* Alerts Area
+    /   1. Utilities for creating the alerts
+    /   2. Set Individual Khron Alerts
+    /   3. Set Khron Tabs
+    /   4. Solve krhon alerts
+    */
+    
+    //Alert utilities
+    
+    function _getServingNode() internal returns (address){
+        require (nodeCorrelative > 0, "No nodes available to serve requests");
+        bytes32 _nodeIndex = keccak256(abi.encodePacked(nodeNonce,address(this)));
+        if (nodeIndex[_nodeIndex] == address(0)){
+            nodeNonce = 0;
+            return _getServingNode();
+        }
+        else{
+            address result = nodeIndex[_nodeIndex];
+            nodeNonce += 1;
+            return result;
+        }
+    }
+        
     //set khronAlerts
-
+    function _setKhronAlert(bytes32 _requestID, uint _timeStamp) internal {
+        bytes32 _alertID = keccak256(abi.encodePacked(_requestID, _timeStamp));
+        alertRegistry[_alertID].requestID = _requestID;
+        bytes memory _data = abi.encodePacked('alert',_alertID,_timeStamp);
+        uint256 _initialDeposit = (callPrice*5)/100;
+        for (uint256 _servingNodeI = 0; _servingNodeI < 2; _servingNodeI ++){
+            address _servingNode = _getServingNode();
+            alertRegistry[_alertID].servingNodes[_servingNodeI] = _servingNode;
+            _dispatchToNodes(_servingNode, _initialDeposit, _data);
+            nodeRegistry[_servingNode].requestsReceived += 1;
+        }
+        emit AlertDispatched(_requestID, _alertID, alertRegistry[_alertID].servingNodes);
+    }
     
     //set khronCalendars
 
     //View functions
-
+    
     function creditOf(address _clientContract) public view returns (uint256){
         return clientRegistry[_clientContract].credit;
     }
@@ -170,6 +227,15 @@ contract KhronusCoordinator is Ownable{
     function getNodeFromIndex(bytes32 _index) public view returns(address){
         return nodeIndex[_index];
     }
+
+    function getAlertServers(bytes32 _alertID) public view returns(address[2] memory){
+        return alertRegistry[_alertID].servingNodes;
+    }
+    
+    function areThereNodes() public view returns (bool){
+        return nodeCorrelative > 0;
+    }
+
     //Request to node functions
     function setKhronTokenAddress(
         address _khronAddress
@@ -183,12 +249,12 @@ contract KhronusCoordinator is Ownable{
         }
 
 
-    function setKhronTab(
+    function _dispatchToNodes(
         address _nodeContract, //this has to be a khron token recipient identifies the khron_node handling the request 
         uint256 _khronFee,
         bytes memory _data
         )
-        external
+        internal
         returns (bool)
         {
             return khronus.transferAndCall(_nodeContract,_khronFee,_data);
