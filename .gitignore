@@ -9,7 +9,3 @@ data.txt
 .env
 contract_library/contract_addresses_ext.json
 use_case_test.sol
-logger.txt
-scraps
-debug_script.py
-testing.sol

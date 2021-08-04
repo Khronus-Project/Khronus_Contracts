@@ -10,8 +10,7 @@ abstract contract KhronusNode {
     function onTokenTransfer(
         address _sender, 
         uint256 _value, 
-        bytes memory _data
-        ) 
+        bytes memory _data) 
         external {
             emit RequestReceived(_sender,_value,_data);
         }
