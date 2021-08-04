@@ -44,7 +44,7 @@ interface KhronTokenInterface {
 
   function decreaseApproval(
     address spender,
-    uint256 subtractedValue
+    uint256 addedValue
   )
     external
     returns (
@@ -53,11 +53,8 @@ interface KhronTokenInterface {
 
   function increaseApproval(
     address spender,
-    uint256 addedValue
-  ) external
-    returns (
-      bool success
-    );
+    uint256 subtractedValue
+  ) external;
 
   function name()
     external
