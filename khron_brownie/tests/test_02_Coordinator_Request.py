@@ -28,12 +28,13 @@ def test_sendKhronRequest_happyPath(constants):
     coordinatorContract.registerNode(nodeContract_1.address,{'from':nodeOwner_1})
     # Set Test
     txt = clientContract.openEscrow(escrowBeneficiary, timestamp, {'from':escrowDepositor})
-    eventOfInterest = txt.events['AlertDispatched']
+    eventsOfInterest = txt.events['AlertDispatched'], txt.events['Transfer']
     #Test Log
-    data = {'Test':'setKhronRequest_One_Node','TestTime':datetime.utcnow().ctime(), 'TestingAddresses':{"Token":tokenContract.address, "Coordinator":coordinatorContract.address,"Client":clientContract.address, "Nodes":[nodeContract_0.address, nodeContract_1.address]}, "Events":eventOfInterest}
+    data = {'Test':'setKhronRequest_Two_Nodes','TestTime':datetime.utcnow().ctime(), 'TestingAddresses':{"Token":tokenContract.address, "Coordinator":coordinatorContract.address,"Client":clientContract.address, "Nodes":[nodeContract_0.address, nodeContract_1.address]}, "Events":eventsOfInterest}
     logger(data)
     # No Assertion
-    assert (eventOfInterest["_assignedNodes"][0] == nodeContract_0.address) and eventOfInterest["_assignedNodes"][1] == nodeContract_1.address
+    assert (eventsOfInterest[0]["assignedNodes"][0] == nodeContract_0.address) and eventsOfInterest[0]["assignedNodes"][1] == nodeContract_1.address
+    assert (eventsOfInterest[1][1]['to'] == nodeContract_0.address) and eventsOfInterest[1][2]['to'] == nodeContract_1.address
 
 def test_sendKhronRequest_one_node_available(constants): 
     # Set up constants for testing
@@ -58,7 +59,7 @@ def test_sendKhronRequest_one_node_available(constants):
     data = {'Test':'setKhronRequest_One_Node','TestTime':datetime.utcnow().ctime(), 'TestingAddresses':{"Token":tokenContract.address, "Coordinator":coordinatorContract.address,"Client":clientContract.address, "Node":nodeContract_0.address}, "Events":eventOfInterest}
     logger(data)
     # No Assertion
-    assert (eventOfInterest["_assignedNodes"][0] == eventOfInterest["_assignedNodes"][1]) and eventOfInterest["_assignedNodes"][0] == nodeContract_0.address
+    assert (eventOfInterest["assignedNodes"][0] == eventOfInterest["assignedNodes"][1]) and eventOfInterest["assignedNodes"][0] == nodeContract_0.address
 
 def test_sendKhronRequest_no_nodes_available_error(constants): 
     # Set up constants for testing
