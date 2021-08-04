@@ -10,10 +10,10 @@ contract KhronusCoordinator is Ownable{
     KhronTokenInterface private khronus;
     
     // Events
-    event ClientFunded(address indexed _client, address indexed _requester, uint256 _amount);
-    event RequestProcessed(address indexed _client, bytes32 _requestID, bytes _data);
-    event AlertDispatched(bytes32 indexed _requestID,bytes32 _alertID, address[2] _assignedNodes);
-    event NodeRegistered(address indexed _node, bytes32 _index);
+    event ClientFunded(address indexed client, address indexed requester, uint256 amount);
+    event RequestProcessed(address indexed client, bytes32 requestID, bytes data);
+    event AlertDispatched(bytes32 indexed requestID,bytes32 alertID, address[2] assignedNodes);
+    event NodeRegistered(address indexed node, bytes32 index);
 
     
     // Flag variables
@@ -212,6 +212,7 @@ contract KhronusCoordinator is Ownable{
 
     //View functions
     
+    // check privacy of this function in non-development release
     function creditOf(address _clientContract) public view returns (uint256){
         return clientRegistry[_clientContract].credit;
     }
@@ -220,6 +221,7 @@ contract KhronusCoordinator is Ownable{
         return callPrice;
     }
 
+    // check privacy of this function in non-development release
     function commitedFundsOf(address _clientContract) public view returns(uint256){
         return clientRegistry[_clientContract].commitedFunds;
     }
@@ -228,12 +230,9 @@ contract KhronusCoordinator is Ownable{
         return nodeIndex[_index];
     }
 
+    // check privacy of this function in non-development release
     function getAlertServers(bytes32 _alertID) public view returns(address[2] memory){
         return alertRegistry[_alertID].servingNodes;
-    }
-    
-    function areThereNodes() public view returns (bool){
-        return nodeCorrelative > 0;
     }
 
     //Request to node functions
