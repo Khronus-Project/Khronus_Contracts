@@ -88,3 +88,54 @@ def test_sendKhronRequest_no_nodes_available_error(constants):
         isValid = False
     assert coordinatorContract.nodeCorrelative() == 0
     assert not isValid
+
+def test_multiple_call_credits_happy_path(constants):
+    # Set up constants for testing
+    tokenContract = constants[0]
+    coordinatorContract = constants[1]
+    clientContract = constants[2]
+    clientOwner = constants[4]
+    escrowDepositor = accounts[2]
+    escrowBeneficiary = accounts[3]
+    nodeOwner_0 = accounts[4]
+    nodeOwner_1 = accounts[5]
+    registrationDeposit = 1*10**18
+    timestamp = 1626521216
+    # Set environment for testing
+    tokenContract.increaseApproval(coordinatorContract.address, registrationDeposit, {'from':clientOwner})
+    coordinatorContract.registerClient(clientContract.address, registrationDeposit, {'from':clientOwner})
+    nodeContract_0 = TestKhronusNode.deploy({'from':nodeOwner_0})
+    nodeContract_1 = TestKhronusNode.deploy({'from':nodeOwner_1})
+    coordinatorContract.registerNode(nodeContract_0.address,{'from':nodeOwner_0})
+    coordinatorContract.registerNode(nodeContract_1.address,{'from':nodeOwner_1})
+    isValid = True
+    for i in range(10):
+        txt = clientContract.openEscrow(escrowBeneficiary, timestamp, {'from':escrowDepositor})
+    assert i == 9
+
+def test_multiple_call_credits_exception(constants):
+    # Set up constants for testing
+    tokenContract = constants[0]
+    coordinatorContract = constants[1]
+    clientContract = constants[2]
+    clientOwner = constants[4]
+    escrowDepositor = accounts[2]
+    escrowBeneficiary = accounts[3]
+    nodeOwner_0 = accounts[4]
+    nodeOwner_1 = accounts[5]
+    registrationDeposit = 1*10**18
+    timestamp = 1626521216
+    # Set environment for testing
+    tokenContract.increaseApproval(coordinatorContract.address, registrationDeposit, {'from':clientOwner})
+    coordinatorContract.registerClient(clientContract.address, registrationDeposit, {'from':clientOwner})
+    nodeContract_0 = TestKhronusNode.deploy({'from':nodeOwner_0})
+    nodeContract_1 = TestKhronusNode.deploy({'from':nodeOwner_1})
+    coordinatorContract.registerNode(nodeContract_0.address,{'from':nodeOwner_0})
+    coordinatorContract.registerNode(nodeContract_1.address,{'from':nodeOwner_1})
+    result = ""
+    try:
+        for i in range(11):
+            txt = clientContract.openEscrow(escrowBeneficiary, timestamp, {'from':escrowDepositor})
+    except Exception as e:
+        result = e.message
+    assert result == 'VM Exception while processing transaction: revert Not enough funds in contract to set request'

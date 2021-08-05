@@ -154,7 +154,7 @@ contract KhronusCoordinator is Ownable{
         uint256 _requestCost = estimateKhron(TypeOfRequest.khronTab, _iterations);
         address _requester = msg.sender;
         address _owner = clientRegistry[_requester].owner;
-        require (clientRegistry[_requester].credit >= _requestCost, "Not enough funds in contract to set request");
+        require (clientRegistry[_requester].credit - clientRegistry[_requester].commitedFunds >= _requestCost, "Not enough funds in contract to set request");
         bytes32 _requestID = keccak256(abi.encodePacked(_requester, clientRegistry[_requester].nonce));
         clientRegistry[_requester].commitedFunds += _requestCost;
         khronus.decreaseApproval(_owner, _requestCost);
@@ -166,7 +166,7 @@ contract KhronusCoordinator is Ownable{
         else{
             //request calendar with the requestID
         }
-        emit RequestProcessed(_requester, _requestID,abi.encodePacked(_timeStamp, _iterations, _khronTab));
+        emit RequestProcessed(_requester, _requestID,abi.encode(_timeStamp, _iterations, _khronTab));
         return _requestID;
     }
 
@@ -194,10 +194,11 @@ contract KhronusCoordinator is Ownable{
     }
         
     //set khronAlerts
-    function _setKhronAlert(bytes32 _requestID, uint _timeStamp) internal {
+    function _setKhronAlert(bytes32 _requestID, uint256 _timeStamp) internal {
         bytes32 _alertID = keccak256(abi.encodePacked(_requestID, _timeStamp));
         alertRegistry[_alertID].requestID = _requestID;
-        bytes memory _data = abi.encodePacked('alert',_alertID,_timeStamp);
+        uint16 _alertFlag = 0;
+        bytes memory _data = abi.encode(_alertFlag,_alertID, _timeStamp);
         uint256 _initialDeposit = (callPrice*5)/100;
         for (uint256 _servingNodeI = 0; _servingNodeI < 2; _servingNodeI ++){
             address _servingNode = _getServingNode();

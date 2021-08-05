@@ -5,7 +5,7 @@ import "contracts/KhronusClientBase.sol";
 
 contract EscrowInfrastructure is KhronusClient{
 
-    event EscrowCreated(address indexed _depositor, bytes32 _escrowID);
+    event EscrowCreated(address indexed depositor, bytes32 escrowID);
 
     struct escrow {
         uint256 deposit;

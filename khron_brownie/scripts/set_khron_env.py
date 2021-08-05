@@ -11,7 +11,7 @@ def main():
     clientOwner = constants[4]
     nodeOwner_0 = accounts[4]
     nodeOwner_1 = accounts[5]
-    registrationDeposit = 1*10**18
+    registrationDeposit = constants[5]
     # Set environment 
     tokenContract.increaseApproval(coordinatorContract.address, registrationDeposit, {'from':clientOwner})
     coordinatorContract.registerClient(clientContract.address, registrationDeposit, {'from':clientOwner})
