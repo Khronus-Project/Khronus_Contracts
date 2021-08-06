@@ -26,7 +26,7 @@ contract EscrowInfrastructure is KhronusClient{
         KhronusClient(_coordinatorAddress){
     }
 
-    function openEscrow(address _beneficiary, uint _expiryTimeStamp) external payable returns (bytes32){
+    function openEscrow(address _beneficiary, uint256 _expiryTimeStamp) external payable returns (bytes32){
         address _depositor = msg.sender;
         uint256 _deposit = msg.value; 
         bytes32 _escrowID = keccak256(abi.encodePacked(_depositor, nonce));
