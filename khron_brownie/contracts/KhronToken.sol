@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./abstracts/KhronERC20.sol";
-import "./abstracts/ERC677Token.sol";
+import "contracts/KhronERC20.sol";
+import "contracts/ERC677Token.sol";
 
 contract KhronToken is KhronERC20, ERC677Token {
   uint private constant TOTAL_SUPPLY = 10**27;
