@@ -12,4 +12,4 @@ def main():
         addresses = json.load(f)
     clientContract = EscrowInfrastructure.at(addresses["KhronusClient"])
     txt = clientContract.openEscrow(escrowBeneficiary, timestamp, {'from':escrowDepositor})
-    print(txt.events['Transfer'][1]['data'], txt.events['AlertDispatched']['_alertID'], timestamp)
+    print(txt.events['Transfer'][1]['data'], str(txt.events['AlertDispatched']['_alertID']), timestamp)

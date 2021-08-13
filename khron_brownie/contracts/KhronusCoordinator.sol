@@ -160,8 +160,11 @@ contract KhronusCoordinator is Ownable{
         khronus.decreaseApproval(_owner, _requestCost);
         clientRegistry[_requester].nonce += 1;
         requestRegistry[_requestID].iterations = _iterations;
+        
         if (_iterations <= 1){
-           _setKhronAlert(_requestID, _timeStamp);
+            uint256 _iteration = 1;
+            bytes memory _iterationsOrder = abi.encodePacked(_iteration,_iterations);
+            _setKhronAlert(_requestID, _iterationsOrder, _timeStamp);
         }
         else{
             //request calendar with the requestID
@@ -194,11 +197,11 @@ contract KhronusCoordinator is Ownable{
     }
         
     //set khronAlerts
-    function _setKhronAlert(bytes32 _requestID, uint256 _timeStamp) internal {
-        bytes32 _alertID = keccak256(abi.encodePacked(_requestID, _timeStamp));
+    function _setKhronAlert(bytes32 _requestID, bytes memory _alertOrder, uint256 _timeStamp) internal {
+        bytes32 _alertID = keccak256(abi.encodePacked(_requestID, _alertOrder, _timeStamp));
         alertRegistry[_alertID].requestID = _requestID;
-        uint16 _alertFlag = 0;
-        bytes memory _data = abi.encode(_alertFlag,_alertID, _timeStamp);
+        string memory _eventTaskCode = '102'; //hardcoded CRUD event code 1 of task 02
+        bytes memory _data = abi.encodePacked(_requestID, _alertID, _timeStamp, _alertOrder, _eventTaskCode);
         uint256 _initialDeposit = (callPrice*5)/100;
         for (uint256 _servingNodeI = 0; _servingNodeI < 2; _servingNodeI ++){
             address _servingNode = _getServingNode();
