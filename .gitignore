@@ -14,3 +14,4 @@ scraps
 debug_script.py
 testing.sol
 contract_library
+.pytest_cache
