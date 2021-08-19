@@ -1,4 +1,3 @@
-from os import closerange
 import pytest
 from datetime import datetime
 from testing_utils import logger, khron_constants_node

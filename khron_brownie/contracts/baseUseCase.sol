@@ -6,14 +6,19 @@ import "contracts/KhronusClientBase.sol";
 contract EscrowInfrastructure is KhronusClient{
 
     event EscrowCreated(address indexed depositor, bytes32 escrowID);
+    event EscrowExpired(bytes32 indexed escrowID, uint256 timeStamp, bool conditionStatus);
+    event ConditionChanged(bytes32 indexed escrowID, uint256 timeStamp, bool conditionStatus);
+
+    enum EscrowStatus {Open, Expired}
 
     struct escrow {
         uint256 deposit;
         uint256 expiryTimeStamp;
         address depositor;
         address beneficiary;
+        address agent;
         bool condition;
-        //bytes32 khronRequestId; //only for testing
+        EscrowStatus status;
     }
 
     uint256 nonce;
@@ -26,7 +31,7 @@ contract EscrowInfrastructure is KhronusClient{
         KhronusClient(_coordinatorAddress){
     }
 
-    function openEscrow(address _beneficiary, uint256 _expiryTimeStamp) external payable returns (bytes32){
+    function openEscrow(address _beneficiary, uint256 _expiryTimeStamp, address _agent) external payable returns (bytes32){
         address _depositor = msg.sender;
         uint256 _deposit = msg.value; 
         bytes32 _escrowID = keccak256(abi.encodePacked(_depositor, nonce));
@@ -34,22 +39,35 @@ contract EscrowInfrastructure is KhronusClient{
         escrowRegistry[_escrowID].expiryTimeStamp = _expiryTimeStamp;
         escrowRegistry[_escrowID].depositor = _depositor;  
         escrowRegistry[_escrowID].beneficiary = _beneficiary;
+        escrowRegistry[_escrowID].agent = _agent;
         escrowRegistry[_escrowID].condition = false;
-        bytes32 _requestID = requestKhronTab(_expiryTimeStamp, 1, "");
+        escrowRegistry[_escrowID].status = EscrowStatus.Open;
+        bytes32 _requestID = _requestKhronTab(_expiryTimeStamp, 1, "");
         tabRegistry[_requestID] = _escrowID;
         nonce += 1;
         emit EscrowCreated(_depositor, _escrowID);
         return _escrowID;
     }
 
-    function khronFulfill(bytes32 _requestID) internal returns (bool){
+    function agentInput(bytes32 _escrowID, bool _conditionStatus) external {
+        require (msg.sender == escrowRegistry[_escrowID].agent, "only agent can give input");
+        escrowRegistry[_escrowID].condition = _conditionStatus;
+        emit ConditionChanged(_escrowID, block.timestamp, _conditionStatus);
+    }
+    
+    function khronProcessAlert(bytes32 _requestID) override internal returns (bool){
         bytes32 _escrowID = tabRegistry[_requestID];
         if (escrowRegistry[_escrowID].condition == true){
+            payable(escrowRegistry[_escrowID].beneficiary).transfer(escrowRegistry[_escrowID].deposit);
+            escrowRegistry[_escrowID].status = EscrowStatus.Expired;
             return true; //pending to implement transfer
         }
         else{
+            payable(escrowRegistry[_escrowID].beneficiary).transfer(escrowRegistry[_escrowID].deposit);
+            escrowRegistry[_escrowID].status = EscrowStatus.Expired;
             return false; //pending to implement transfer
         }
+        emit EscrowExpired(_escrowID, block.timestamp, escrowRegistry[_escrowID].condition);
     }
 
     function seeDeposit(bytes32 _escrowID) external view returns(uint256) {

@@ -42,7 +42,7 @@ contract KhronusCoordinator is Ownable{
     // ## node registry
 
     uint256 public nodeCorrelative;
-    uint256 public nodeNonce;
+    uint256 nodeNonce;
 
     struct nodeContract {
         uint256 requestsReceived;
@@ -138,7 +138,7 @@ contract KhronusCoordinator is Ownable{
     */
 
     //estimate cost
-    function estimateKhron(TypeOfRequest _requestType, uint256 _iterations) internal returns(uint256){
+    function estimateKhron(TypeOfRequest _requestType, uint256 _iterations) private view returns(uint256){
         if (_requestType == TypeOfRequest.khronTab){
             if (_iterations <= 1) {
                 return callPrice;
@@ -150,7 +150,8 @@ contract KhronusCoordinator is Ownable{
     }
 
     //set khron request
-    function requestKhronTab(uint256 _timeStamp, uint256 _iterations, string memory _khronTab) external returns(bytes32){
+    function requestKhronTab(uint256 _timestamp, uint256 _iterations, string memory _khronTab) external returns(bytes32){
+        require (_timestamp % 60 == 0, "timestamp granularity is on integer minutes your timestamp was not generated through the standard functionality on client contract or you overrode the function");
         uint256 _requestCost = estimateKhron(TypeOfRequest.khronTab, _iterations);
         address _requester = msg.sender;
         address _owner = clientRegistry[_requester].owner;
@@ -164,12 +165,12 @@ contract KhronusCoordinator is Ownable{
         if (_iterations <= 1){
             uint256 _iteration = 1;
             bytes memory _iterationsOrder = abi.encodePacked(_iteration,_iterations);
-            _setKhronAlert(_requestID, _iterationsOrder, _timeStamp);
+            _setKhronAlert(_requestID, _iterationsOrder, _timestamp);
         }
         else{
             //request calendar with the requestID
         }
-        emit RequestProcessed(_requester, _requestID,abi.encode(_timeStamp, _iterations, _khronTab));
+        emit RequestProcessed(_requester, _requestID,abi.encode(_timestamp, _iterations, _khronTab));
         return _requestID;
     }
 
@@ -177,12 +178,12 @@ contract KhronusCoordinator is Ownable{
     /   1. Utilities for creating the alerts
     /   2. Set Individual Khron Alerts
     /   3. Set Khron Tabs
-    /   4. Solve krhon alerts
+    /   4. Serve krhon alerts
     */
     
     //Alert utilities
     
-    function _getServingNode() internal returns (address){
+    function _getServingNode() private returns (address){
         require (nodeCorrelative > 0, "No nodes available to serve requests");
         bytes32 _nodeIndex = keccak256(abi.encodePacked(nodeNonce,address(this)));
         if (nodeIndex[_nodeIndex] == address(0)){
@@ -197,11 +198,11 @@ contract KhronusCoordinator is Ownable{
     }
         
     //set khronAlerts
-    function _setKhronAlert(bytes32 _requestID, bytes memory _alertOrder, uint256 _timeStamp) internal {
-        bytes32 _alertID = keccak256(abi.encodePacked(_requestID, _alertOrder, _timeStamp));
+    function _setKhronAlert(bytes32 _requestID, bytes memory _alertOrder, uint256 _timestamp) private {
+        bytes32 _alertID = keccak256(abi.encodePacked(_requestID, _alertOrder, _timestamp));
         alertRegistry[_alertID].requestID = _requestID;
         string memory _eventTaskCode = '102'; //hardcoded CRUD event code 1 of task 02
-        bytes memory _data = abi.encodePacked(_requestID, _alertID, _timeStamp, _alertOrder, _eventTaskCode);
+        bytes memory _data = abi.encodePacked(_requestID, _alertID, _timestamp, _alertOrder, _eventTaskCode);
         uint256 _initialDeposit = (callPrice*5)/100;
         for (uint256 _servingNodeI = 0; _servingNodeI < 2; _servingNodeI ++){
             address _servingNode = _getServingNode();
@@ -212,30 +213,37 @@ contract KhronusCoordinator is Ownable{
         emit AlertDispatched(_requestID, _alertID, alertRegistry[_alertID].servingNodes);
     }
     
+    //serve khronAlerts 
+    function serveKhronAlert(bytes32 _alertID) external {
+        require(msg.sender == alertRegistry[_alertID].servingNodes[0] || msg.sender == alertRegistry[_alertID].servingNodes[1], "unauthorized Node cannot solve alert");
+
+    }
+
+
     //set khronCalendars
 
     //View functions
-    
-    // check privacy of this function in non-development release
-    function creditOf(address _clientContract) public view returns (uint256){
-        return clientRegistry[_clientContract].credit;
-    }
 
-    function getCallPrice() public view returns (uint256){
+    function getCallPrice() external view returns (uint256){
         return callPrice;
     }
-
-    // check privacy of this function in non-development release
-    function commitedFundsOf(address _clientContract) public view returns(uint256){
-        return clientRegistry[_clientContract].commitedFunds;
-    }
-
-    function getNodeFromIndex(bytes32 _index) public view returns(address){
+    
+    function getNodeFromIndex(bytes32 _index) external view returns(address){
         return nodeIndex[_index];
     }
 
     // check privacy of this function in non-development release
-    function getAlertServers(bytes32 _alertID) public view returns(address[2] memory){
+    function creditOf(address _clientContract) external view returns (uint256){
+        return clientRegistry[_clientContract].credit;
+    }
+
+    // check privacy of this function in non-development release
+    function commitedFundsOf(address _clientContract) external view returns(uint256){
+        return clientRegistry[_clientContract].commitedFunds;
+    }
+
+    // check privacy of this function in non-development release
+    function getAlertServers(bytes32 _alertID) external view returns(address[2] memory){
         return alertRegistry[_alertID].servingNodes;
     }
 
@@ -257,7 +265,7 @@ contract KhronusCoordinator is Ownable{
         uint256 _khronFee,
         bytes memory _data
         )
-        internal
+        private
         returns (bool)
         {
             return khronus.transferAndCall(_nodeContract,_khronFee,_data);
