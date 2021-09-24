@@ -55,4 +55,6 @@ interface KhronusCoordinatorInterface {
         )
         external
         returns (bool);
+
+    function serveKhronAlert(bytes32 _alertID) external returns (bool);
 }

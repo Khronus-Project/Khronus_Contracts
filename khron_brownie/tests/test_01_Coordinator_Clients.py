@@ -1,56 +1,62 @@
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 from testing_utils import logger, khron_constants_client
 
 @pytest.fixture
 def constants():
     return khron_constants_client()
 
-def test_register_client(constants):
-    # Set up constants for testing
-    tokenContract = constants[0]
-    coordinatorContract = constants[1]
-    clientContract = constants[2]
-    clientOwner = constants[4]
-    registrationDeposit = 1*10**18
-    # Test Body
-    clientOwnerBalance = tokenContract.balanceOf(clientOwner.address)
-    clientOwnerAllowance = tokenContract.allowance(coordinatorContract.address, clientOwner.address)
-    coordinatorBalance = tokenContract.balanceOf(coordinatorContract.address)
-    clientContractBalance = coordinatorContract.creditOf(clientContract.address)
-    tokenContract.increaseApproval(coordinatorContract.address, registrationDeposit, {'from':clientOwner})
-    txt = coordinatorContract.registerClient(clientContract.address, registrationDeposit, {'from':clientOwner})
-    #Test Log
-    data = {'Test':'registerClient','TestTime':datetime.utcnow().ctime(), 'TestingAddresses':{"Token":tokenContract.address, "Coordinator":coordinatorContract.address,"Client":clientContract.address}, "Events":dict(txt.events)}
-    logger(data)
-    # Assertion
-    assert tokenContract.balanceOf(clientOwner.address) == clientOwnerBalance - registrationDeposit
-    assert tokenContract.balanceOf(coordinatorContract.address) == coordinatorBalance + registrationDeposit
-    assert tokenContract.allowance(coordinatorContract.address, clientOwner.address) == clientOwnerAllowance + registrationDeposit
-    assert coordinatorContract.creditOf(clientContract.address) == clientContractBalance + registrationDeposit
+@pytest.fixture
+def current_utc_timestamp():
+    return int(datetime.now(timezone.utc).timestamp())
 
-def test_fund_client(constants):
+def test_register_client(constants, current_utc_timestamp):
     # Set up constants for testing
-    tokenContract = constants[0]
-    coordinatorContract = constants[1]
-    clientContract = constants[2]
-    clientOwner = constants[4]
-    registrationDeposit = 1*10**18
-    clientCreditTokens = 50*10**18
-    tokenContract.increaseApproval(coordinatorContract.address, registrationDeposit, {'from':clientOwner})
-    coordinatorContract.registerClient(clientContract.address, registrationDeposit, {'from':clientOwner})
+    token_contract = constants["Token_Contract"]
+    coordinator_contract = constants["Coordinator_Contract"]
+    client_contract = constants["Client_Contract"]
+    client_owner = constants["Client_Owner"]
+    registration_deposit = 1*10**18
     # Test Body
-    clientOwnerBalance = tokenContract.balanceOf(clientOwner.address)
-    clientOwnerAllowance = tokenContract.allowance(coordinatorContract.address, clientOwner.address)
-    coordinatorBalance = tokenContract.balanceOf(coordinatorContract.address)
-    clientContractBalance = coordinatorContract.creditOf(clientContract.address)
-    tokenContract.increaseApproval(coordinatorContract.address, clientCreditTokens, {'from':clientOwner})
-    txt = coordinatorContract.fundClient(clientContract.address, clientCreditTokens, {'from':clientOwner})
+    client_owner_balance = token_contract.balanceOf(client_owner.address)
+    client_owner_allowance = token_contract.allowance(coordinator_contract.address, client_owner.address)
+    coordinator_balance = token_contract.balanceOf(coordinator_contract.address)
+    client_contract_balance = coordinator_contract.creditOf(client_contract.address)
+    token_contract.increaseApproval(coordinator_contract.address, registration_deposit, {'from':client_owner})
+    txt = coordinator_contract.registerClient(client_contract.address, registration_deposit, {'from':client_owner})
     #Test Log
-    data = {'Test':'fundClient','TestTime':datetime.utcnow().ctime(), 'TestingAddresses':{"Token":tokenContract.address, "Coordinator":coordinatorContract.address,"Client":clientContract.address}, "Events":dict(txt.events)}
+    current_time = datetime.fromtimestamp(current_utc_timestamp,timezone.utc).ctime()
+    data = {'Test':'registerClient','TestTime':current_time, 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Client":client_contract.address}, "Events":dict(txt.events)}
     logger(data)
     # Assertion
-    assert tokenContract.balanceOf(clientOwner.address) == clientOwnerBalance - clientCreditTokens
-    assert tokenContract.balanceOf(coordinatorContract.address) == coordinatorBalance + clientCreditTokens
-    assert tokenContract.allowance(coordinatorContract.address, clientOwner.address) == clientOwnerAllowance + clientCreditTokens
-    assert coordinatorContract.creditOf(clientContract.address) == clientContractBalance + clientCreditTokens
+    assert token_contract.balanceOf(client_owner.address) == client_owner_balance - registration_deposit
+    assert token_contract.balanceOf(coordinator_contract.address) == coordinator_balance + registration_deposit
+    assert token_contract.allowance(coordinator_contract.address, client_owner.address) == client_owner_allowance + registration_deposit
+    assert coordinator_contract.creditOf(client_contract.address) == client_contract_balance + registration_deposit
+
+def test_fund_client(constants, current_utc_timestamp):
+    # Set up constants for testing
+    token_contract = constants["Token_Contract"]
+    coordinator_contract = constants["Coordinator_Contract"]
+    client_contract = constants["Client_Contract"]
+    client_owner = constants["Client_Owner"]
+    registration_deposit = 1*10**18
+    client_credit_tokens = 50*10**18
+    token_contract.increaseApproval(coordinator_contract.address, registration_deposit, {'from':client_owner})
+    coordinator_contract.registerClient(client_contract.address, registration_deposit, {'from':client_owner})
+    # Test Body
+    client_owner_balance = token_contract.balanceOf(client_owner.address)
+    client_owner_allowance = token_contract.allowance(coordinator_contract.address, client_owner.address)
+    coordinator_balance = token_contract.balanceOf(coordinator_contract.address)
+    client_contract_balance = coordinator_contract.creditOf(client_contract.address)
+    token_contract.increaseApproval(coordinator_contract.address, client_credit_tokens, {'from':client_owner})
+    txt = coordinator_contract.fundClient(client_contract.address, client_credit_tokens, {'from':client_owner})
+    #Test Log
+    current_time = datetime.fromtimestamp(current_utc_timestamp,timezone.utc).ctime()
+    data = {'Test':'fundClient','TestTime':current_time, 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Client":client_contract.address}, "Events":dict(txt.events)}
+    logger(data)
+    # Assertion
+    assert token_contract.balanceOf(client_owner.address) == client_owner_balance - client_credit_tokens
+    assert token_contract.balanceOf(coordinator_contract.address) == coordinator_balance + client_credit_tokens
+    assert token_contract.allowance(coordinator_contract.address, client_owner.address) == client_owner_allowance + client_credit_tokens
+    assert coordinator_contract.creditOf(client_contract.address) == client_contract_balance + client_credit_tokens

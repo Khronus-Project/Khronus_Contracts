@@ -12,7 +12,19 @@ abstract contract KhronusNode {
     
     KhronusCoordinatorInterface private KhronusCoordinator;
     address owner;
-    address khronusCoordinator;
+
+    constructor (address _khronusCoordinator) {
+        KhronusCoordinator = KhronusCoordinatorInterface(_khronusCoordinator);
+        owner = msg.sender;
+    }
+
+    function fulfillAlert(bytes32 _alertID) external returns(bool){
+        return KhronusCoordinator.serveKhronAlert(_alertID);
+    }
+    
+    function testing() external view returns (address){
+        return owner;
+    }
 
     function onTokenTransfer(
         address _sender, 
@@ -22,6 +34,8 @@ abstract contract KhronusNode {
         external {
             emit RequestReceived(_sender,_value,_data);
         }
+    
+    
 
 
 }
