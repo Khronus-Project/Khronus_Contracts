@@ -13,10 +13,10 @@ def current_utc_timestamp():
 
 def test_sendKhronRequest_happyPath(constants, current_utc_timestamp): 
     # Set up constants for testing
-    token_contract = constants[0]
-    coordinator_contract = constants[1]
-    client_contract = constants[2]
-    client_owner = constants[4]
+    token_contract = constants["Token_Contract"]
+    coordinator_contract = constants["Coordinator_Contract"]
+    client_contract = constants["Client_Contract"]
+    client_owner = constants["Client_Owner"]
     escrow_depositor = accounts[2]
     escrow_beneficiary = accounts[3]
     node_owner_0 = accounts[4]
@@ -28,26 +28,27 @@ def test_sendKhronRequest_happyPath(constants, current_utc_timestamp):
     # Set environment for testing
     token_contract.increaseApproval(coordinator_contract.address, registration_deposit, {'from':client_owner})
     coordinator_contract.registerClient(client_contract.address, registration_deposit, {'from':client_owner})
-    nodeContract_0 = TestKhronusNode.deploy({'from':node_owner_0})
-    nodeContract_1 = TestKhronusNode.deploy({'from':node_owner_1})
-    coordinator_contract.registerNode(nodeContract_0.address,{'from':node_owner_0})
-    coordinator_contract.registerNode(nodeContract_1.address,{'from':node_owner_1})
+    node_contract_0 = TestKhronusNode.deploy(coordinator_contract.address, {'from':node_owner_0})
+    node_contract_1 = TestKhronusNode.deploy(coordinator_contract.address, {'from':node_owner_1})
+    coordinator_contract.registerNode(node_contract_0.address,{'from':node_owner_0})
+    coordinator_contract.registerNode(node_contract_1.address,{'from':node_owner_1})
     # Set Test
     txt = client_contract.openEscrow(escrow_beneficiary, timestamp, agent, {'from':escrow_depositor})
-    eventsOfInterest = txt.events['AlertDispatched'], txt.events['Transfer']
+    events_of_interest = txt.events['AlertDispatched'], txt.events['Transfer']
     #Test Log
-    data = {'Test':'setKhronRequest_Two_Nodes','TestTime':datetime.fromtimestamp(current_utc_timestamp,timezone.utc).ctime(), 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Client":client_contract.address, "Nodes":[nodeContract_0.address, nodeContract_1.address]}, "Events":eventsOfInterest}
+    current_time = datetime.fromtimestamp(current_utc_timestamp,timezone.utc).ctime()
+    data = {'Test':'setKhronRequest_Two_Nodes','TestTime':current_time, 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Client":client_contract.address, "Nodes":[node_contract_0.address, node_contract_1.address]}, "Events":events_of_interest}
     logger(data)
     # No Assertion
-    assert (eventsOfInterest[0]["assignedNodes"][0] == nodeContract_0.address) and eventsOfInterest[0]["assignedNodes"][1] == nodeContract_1.address
-    assert (eventsOfInterest[1][1]['to'] == nodeContract_0.address) and eventsOfInterest[1][2]['to'] == nodeContract_1.address
+    assert (events_of_interest[0]["assignedNodes"][0] == node_contract_0.address) and events_of_interest[0]["assignedNodes"][1] == node_contract_1.address
+    assert (events_of_interest[1][1]['to'] == node_contract_0.address) and events_of_interest[1][2]['to'] == node_contract_1.address
 
 def test_sendKhronRequest_one_node_available(constants, current_utc_timestamp): 
     # Set up constants for testing
-    token_contract = constants[0]
-    coordinator_contract = constants[1]
-    client_contract = constants[2]
-    client_owner = constants[4]
+    token_contract = constants["Token_Contract"]
+    coordinator_contract = constants["Coordinator_Contract"]
+    client_contract = constants["Client_Contract"]
+    client_owner = constants["Client_Owner"]
     escrow_depositor = accounts[2]
     escrow_beneficiary = accounts[3]
     node_owner_0 = accounts[4]
@@ -58,23 +59,24 @@ def test_sendKhronRequest_one_node_available(constants, current_utc_timestamp):
     # Set environment for testing
     token_contract.increaseApproval(coordinator_contract.address, registration_deposit, {'from':client_owner})
     coordinator_contract.registerClient(client_contract.address, registration_deposit, {'from':client_owner})
-    nodeContract_0 = TestKhronusNode.deploy({'from':node_owner_0})
-    coordinator_contract.registerNode(nodeContract_0.address,{'from':node_owner_0})
+    node_contract_0 = TestKhronusNode.deploy(coordinator_contract.address, {'from':node_owner_0})
+    coordinator_contract.registerNode(node_contract_0.address,{'from':node_owner_0})
     # Set Test
     txt = client_contract.openEscrow(escrow_beneficiary, timestamp, agent, {'from':escrow_depositor})
-    eventOfInterest = txt.events['AlertDispatched']
+    events_of_interest = txt.events['AlertDispatched']
     #Test Log
-    data = {'Test':'setKhronRequest_One_Node','TestTime':datetime.fromtimestamp(current_utc_timestamp,timezone.utc).ctime(), 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Client":client_contract.address, "Node":nodeContract_0.address}, "Events":eventOfInterest}
+    current_time = datetime.fromtimestamp(current_utc_timestamp,timezone.utc).ctime()
+    data = {'Test':'setKhronRequest_One_Node','TestTime':current_time, 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Client":client_contract.address, "Node":node_contract_0.address}, "Events":events_of_interest}
     logger(data)
     # No Assertion
-    assert (eventOfInterest["assignedNodes"][0] == eventOfInterest["assignedNodes"][1]) and eventOfInterest["assignedNodes"][0] == nodeContract_0.address
+    assert (events_of_interest["assignedNodes"][0] == events_of_interest["assignedNodes"][1]) and events_of_interest["assignedNodes"][0] == node_contract_0.address
 
 def test_sendKhronRequest_no_nodes_available_error(constants, current_utc_timestamp): 
     # Set up constants for testing
-    token_contract = constants[0]
-    coordinator_contract = constants[1]
-    client_contract = constants[2]
-    client_owner = constants[4]
+    token_contract = constants["Token_Contract"]
+    coordinator_contract = constants["Coordinator_Contract"]
+    client_contract = constants["Client_Contract"]
+    client_owner = constants["Client_Owner"]
     escrow_depositor = accounts[2]
     escrow_beneficiary = accounts[3]
     registration_deposit = 1*10**18
@@ -85,26 +87,27 @@ def test_sendKhronRequest_no_nodes_available_error(constants, current_utc_timest
     token_contract.increaseApproval(coordinator_contract.address, registration_deposit, {'from':client_owner})
     coordinator_contract.registerClient(client_contract.address, registration_deposit, {'from':client_owner})
     # Set test
-    isValid = True
+    is_valid = True
+    current_time = datetime.fromtimestamp(current_utc_timestamp,timezone.utc).ctime()
     try:
         txt = client_contract.openEscrow(escrow_beneficiary, timestamp, agent, {'from':escrow_depositor})
         #Test Log
-        data = {'Test':'setKhronRequest','TestTime':datetime.fromtimestamp(current_utc_timestamp,timezone.utc).ctime(), 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Client":client_contract.address}, "Events":dict(txt.events)}
+        data = {'Test':'setKhronRequest','TestTime':current_time, 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Client":client_contract.address}, "Events":dict(txt.events)}
         logger(data)
         # No Assertion
     except Exception as e:
-        data = {'Test':'setKhronRequest_Exception_no_nodes','TestTime':datetime.fromtimestamp(current_utc_timestamp,timezone.utc).ctime(), 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Client":client_contract.address}, "Exception":e.message}
+        data = {'Test':'setKhronRequest_Exception_no_nodes','TestTime':current_time, 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Client":client_contract.address}, "Exception":e.message}
         logger(data)
-        isValid = False
+        is_valid = False
     assert coordinator_contract.nodeCorrelative() == 0
-    assert not isValid
+    assert not is_valid
 
 def test_multiple_call_credits_happy_path(constants, current_utc_timestamp):
     # Set up constants for testing
-    token_contract = constants[0]
-    coordinator_contract = constants[1]
-    client_contract = constants[2]
-    client_owner = constants[4]
+    token_contract = constants["Token_Contract"]
+    coordinator_contract = constants["Coordinator_Contract"]
+    client_contract = constants["Client_Contract"]
+    client_owner = constants["Client_Owner"]
     escrow_depositor = accounts[2]
     escrow_beneficiary = accounts[3]
     node_owner_0 = accounts[4]
@@ -116,21 +119,21 @@ def test_multiple_call_credits_happy_path(constants, current_utc_timestamp):
     # Set environment for testing
     token_contract.increaseApproval(coordinator_contract.address, registration_deposit, {'from':client_owner})
     coordinator_contract.registerClient(client_contract.address, registration_deposit, {'from':client_owner})
-    nodeContract_0 = TestKhronusNode.deploy({'from':node_owner_0})
-    nodeContract_1 = TestKhronusNode.deploy({'from':node_owner_1})
-    coordinator_contract.registerNode(nodeContract_0.address,{'from':node_owner_0})
-    coordinator_contract.registerNode(nodeContract_1.address,{'from':node_owner_1})
-    isValid = True
+    node_contract_0 = TestKhronusNode.deploy(coordinator_contract.address, {'from':node_owner_0})
+    node_contract_1 = TestKhronusNode.deploy(coordinator_contract.address, {'from':node_owner_1})
+    coordinator_contract.registerNode(node_contract_0.address,{'from':node_owner_0})
+    coordinator_contract.registerNode(node_contract_1.address,{'from':node_owner_1})
+    is_valid = True
     for i in range(10):
         txt = client_contract.openEscrow(escrow_beneficiary, timestamp, agent,{'from':escrow_depositor})
     assert i == 9
 
 def test_multiple_call_credits_exception(constants, current_utc_timestamp):
     # Set up constants for testing
-    token_contract = constants[0]
-    coordinator_contract = constants[1]
-    client_contract = constants[2]
-    client_owner = constants[4]
+    token_contract = constants["Token_Contract"]
+    coordinator_contract = constants["Coordinator_Contract"]
+    client_contract = constants["Client_Contract"]
+    client_owner = constants["Client_Owner"]
     escrow_depositor = accounts[2]
     escrow_beneficiary = accounts[3]
     node_owner_0 = accounts[4]
@@ -142,10 +145,10 @@ def test_multiple_call_credits_exception(constants, current_utc_timestamp):
     # Set environment for testing
     token_contract.increaseApproval(coordinator_contract.address, registration_deposit, {'from':client_owner})
     coordinator_contract.registerClient(client_contract.address, registration_deposit, {'from':client_owner})
-    nodeContract_0 = TestKhronusNode.deploy({'from':node_owner_0})
-    nodeContract_1 = TestKhronusNode.deploy({'from':node_owner_1})
-    coordinator_contract.registerNode(nodeContract_0.address,{'from':node_owner_0})
-    coordinator_contract.registerNode(nodeContract_1.address,{'from':node_owner_1})
+    node_contract_0 = TestKhronusNode.deploy(coordinator_contract.address, {'from':node_owner_0})
+    node_contract_1 = TestKhronusNode.deploy(coordinator_contract.address, {'from':node_owner_1})
+    coordinator_contract.registerNode(node_contract_0.address,{'from':node_owner_0})
+    coordinator_contract.registerNode(node_contract_1.address,{'from':node_owner_1})
     result = ""
     try:
         for i in range(11):

@@ -12,6 +12,7 @@ use_case_test.sol
 logger.txt
 scraps
 debug_script.py
+debug_script01.py
 testing.sol
 contract_library
 .pytest_cache
