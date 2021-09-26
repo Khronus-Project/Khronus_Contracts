@@ -1,44 +1,50 @@
-from os import closerange
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 from testing_utils import logger, khron_constants_node
 
 @pytest.fixture
 def constants():
     return khron_constants_node()
 
-def test_register_node_happy_path(constants):
+@pytest.fixture
+def current_utc_timestamp():
+    return int(datetime.now(timezone.utc).timestamp())
+
+def test_register_node_happy_path(constants,current_utc_timestamp):
     # Set up constants for testing
-    tokenContract = constants[0]
-    coordinatorContract = constants[1]
-    nodeContract = constants[2]
-    nodeOwner = constants[5]
+    token_contract = constants["Token_Contract"]
+    coordinator_contract = constants["Coordinator_Contract"]
+    node_contract = constants["Node_Contracts"][0]
+    node_owner = constants["Node_Owners"][0]
     # Test Body
-    txt = coordinatorContract.registerNode(nodeContract.address,{'from':nodeOwner})
-    nodeIndex = txt.return_value
-    data = {'Test':'register_node','TestTime':datetime.utcnow().ctime(), 'TestingAddresses':{"Token":tokenContract.address, "Coordinator":coordinatorContract.address,"Node":nodeContract.address}, "Events":txt.events}
+    txt = coordinator_contract.registerNode(node_contract.address,{'from':node_owner})
+    node_index = txt.return_value
+    # Test Logs
+    current_time = datetime.fromtimestamp(current_utc_timestamp,timezone.utc).ctime()
+    data = {'Test':'register_node','TestTime':current_time, 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Node":node_contract.address}, "Events":txt.events}
     logger(data)
     # Assertion
-    assert coordinatorContract.getNodeFromIndex(nodeIndex) == nodeContract.address
+    assert coordinator_contract.getNodeFromIndex(node_index) == node_contract.address
     
-def test_register_node_twice_error(constants):
+def test_register_node_twice_error(constants,current_utc_timestamp):
     # Set up constants for testing
-    tokenContract = constants[0]
-    coordinatorContract = constants[1]
-    nodeContract = constants[2]
-    nodeOwner_0 = constants[4]
-    nodeOwner_1 = constants[5]
+    token_contract = constants["Token_Contract"]
+    coordinator_contract = constants["Coordinator_Contract"]
+    node_contract = constants["Node_Contracts"][0]
+    node_owner_0 = constants["Node_Owners"][0]
+    node_owner_1 = constants["Node_Owners"][1]
     isValid = True
     # Test Body
-    coordinatorContract.registerNode(nodeContract.address,{'from':nodeOwner_0})
+    coordinator_contract.registerNode(node_contract.address,{'from':node_owner_0})
+    current_time = datetime.fromtimestamp(current_utc_timestamp,timezone.utc).ctime()
     try:
-        txt = coordinatorContract.registerNode(nodeContract.address,{'from':nodeOwner_1})
-        nodeIndex = txt.return_value
-        data = {'Test':'register_node','TestTime':datetime.utcnow().ctime(), 'TestingAddresses':{"Token":tokenContract.address, "Coordinator":coordinatorContract.address,"Node":nodeContract.address}, "Events":txt.events}
+        txt = coordinator_contract.registerNode(node_contract.address,{'from':node_owner_1})
+        node_index = txt.return_value
+        data = {'Test':'register_node','TestTime':current_time, 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Node":node_contract.address}, "Events":txt.events}
         logger(data)
         # Assertion
     except Exception as e:
-        data = {'Test':'register_node','TestTime':datetime.utcnow().ctime(), 'TestingAddresses':{"Token":tokenContract.address, "Coordinator":coordinatorContract.address,"Node":nodeContract.address}, "Exception":e.message}
+        data = {'Test':'register_node','TestTime':current_time, 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Node":node_contract.address}, "Exception":e.message}
         logger(data)
         isValid = False
         # Assertion

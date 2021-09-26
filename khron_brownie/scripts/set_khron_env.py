@@ -15,8 +15,8 @@ def main():
     # Set environment 
     tokenContract.increaseApproval(coordinatorContract.address, registrationDeposit, {'from':clientOwner})
     coordinatorContract.registerClient(clientContract.address, registrationDeposit, {'from':clientOwner})
-    nodeContract_0 = TestKhronusNode.deploy({'from':nodeOwner_0})
-    nodeContract_1 = TestKhronusNode.deploy({'from':nodeOwner_1})
+    nodeContract_0 = TestKhronusNode.deploy(coordinatorContract.address,{'from':nodeOwner_0})
+    nodeContract_1 = TestKhronusNode.deploy(coordinatorContract.address,{'from':nodeOwner_1})
     coordinatorContract.registerNode(nodeContract_0.address,{'from':nodeOwner_0})
     coordinatorContract.registerNode(nodeContract_1.address,{'from':nodeOwner_1})
     # Record environment
