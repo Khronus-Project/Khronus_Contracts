@@ -15,9 +15,11 @@ contract KhronusCoordinator is Ownable{
 
     // Events
     event ClientFunded(address indexed client, address indexed requester, uint256 amount);
+    event ClientRegistered(address indexed client, address indexed requester, uint256 timestamp);
     event RequestProcessed(address indexed client, bytes32 requestID, bytes data);
     event AlertDispatched(bytes32 indexed requestID,bytes32 alertID, address[2] assignedNodes);
     event AlertFulfilled(bytes32 indexed requestID,  address indexed servingNode,bytes32 alertID, alertStatus status);  
+    event AlertMistaken(address indexed servingNode,bytes32 alertID, uint256 expectedTimestamp, uint256 actualTimestamp);
     event NodeRegistered(address indexed node, bytes32 index);
 
     
@@ -251,6 +253,7 @@ contract KhronusCoordinator is Ownable{
         }
         else {
            nodeRegistry[_servingNode].requestsFailed += 1;
+           emit AlertMistaken(_servingNode, _alertID, alertRegistry[_alertID].timestamp, block.timestamp);
         }
         return true;
     }
