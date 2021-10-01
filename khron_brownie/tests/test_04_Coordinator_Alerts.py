@@ -36,7 +36,7 @@ def test_alert_operation_happyPath(constants, current_utc_timestamp):
     alert_ID = txt_set_escrow.events['AlertDispatched']['alertID']
     events_of_interest = txt_escrow_status.events["ConditionChanged"]
     # Set Test
-    sleep(60)
+    sleep(150)
     txt_serve_alert = nodeContract_0.fulfillAlert(alert_ID, {'from':mock_node})
     #Test Log
     data = {'Test':'KhronAlertOperations','TestTime':datetime.utcnow().ctime(), 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Client":client_contract.address, "Nodes":[nodeContract_0.address, nodeContract_1.address]}, "Events":txt_serve_alert.events}

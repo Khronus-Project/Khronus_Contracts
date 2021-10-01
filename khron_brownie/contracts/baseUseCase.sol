@@ -13,7 +13,7 @@ contract EscrowInfrastructure is KhronusClient{
 
     struct escrow {
         uint256 balance;
-        uint256 expiryTimeStamp;
+        uint256 expiryTimestamp;
         address depositor;
         address beneficiary;
         address agent;
@@ -31,21 +31,21 @@ contract EscrowInfrastructure is KhronusClient{
         KhronusClient(_coordinatorAddress){
     }
 
-    function openEscrow(address _beneficiary, uint256 _expiryTimeStamp, address _agent) external payable returns (bytes32){
+    function openEscrow(address _beneficiary, uint256 _expiryTimestamp, address _agent) external payable returns (bytes32){
         address _depositor = msg.sender;
         uint256 _deposit = msg.value; 
         bytes32 _escrowID = keccak256(abi.encodePacked(_depositor, nonce));
         escrowRegistry[_escrowID].balance = _deposit;
-        escrowRegistry[_escrowID].expiryTimeStamp = _expiryTimeStamp;
+        escrowRegistry[_escrowID].expiryTimestamp = _expiryTimestamp;
         escrowRegistry[_escrowID].depositor = _depositor;  
         escrowRegistry[_escrowID].beneficiary = _beneficiary;
         escrowRegistry[_escrowID].agent = _agent;
         escrowRegistry[_escrowID].condition = false;
         escrowRegistry[_escrowID].status = EscrowStatus.Open;
-        bytes32 _requestID = clientRequestKhronTab(_expiryTimeStamp, 1, "");
+        bytes32 _requestID = clientRequestKhronTab(_expiryTimestamp, 1, "");
         tabRegistry[_requestID] = _escrowID;
         nonce += 1;
-        emit EscrowCreated(_depositor, _escrowID, _expiryTimeStamp, _deposit);
+        emit EscrowCreated(_depositor, _escrowID, _expiryTimestamp, _deposit);
         return _escrowID;
     }
 
@@ -57,7 +57,7 @@ contract EscrowInfrastructure is KhronusClient{
     
     function khronProcessAlert(bytes32 _requestID) override internal returns (bool){
         bytes32 _escrowID = tabRegistry[_requestID];
-        if (escrowRegistry[_escrowID].condition == true){
+        if (escrowRegistry[_escrowID].condition){
             payable(escrowRegistry[_escrowID].beneficiary).transfer(escrowRegistry[_escrowID].balance);
             escrowRegistry[_escrowID].balance = 0;
             escrowRegistry[_escrowID].status = EscrowStatus.Expired;
@@ -95,4 +95,18 @@ contract EscrowInfrastructure is KhronusClient{
         return escrowRegistry[_escrowID].status;
     }
 
+    function expiryManually(bytes32 _escrowID) external payable returns(bool) {
+        require(block.timestamp >= escrowRegistry[_escrowID].expiryTimestamp,"require timestamp has passed to manually expire");
+        if (escrowRegistry[_escrowID].condition){
+            payable(escrowRegistry[_escrowID].beneficiary).transfer(escrowRegistry[_escrowID].balance);
+            escrowRegistry[_escrowID].balance = 0;
+            escrowRegistry[_escrowID].status = EscrowStatus.Expired;
+        }
+        else{
+            payable(escrowRegistry[_escrowID].depositor).transfer(escrowRegistry[_escrowID].balance);
+            escrowRegistry[_escrowID].balance = 0;
+            escrowRegistry[_escrowID].status = EscrowStatus.Expired;
+        }
+        emit EscrowExpired(_escrowID, block.timestamp, escrowRegistry[_escrowID].condition);
+    }
 }
