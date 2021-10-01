@@ -41,6 +41,7 @@ contract KhronusCoordinator is Ownable{
     uint256 registrationDeposit;
     uint256 initialRequestDeposit; 
     uint256 fullfillmentRate; 
+    uint256 bandOfTolerance;
     
     // ## client registry
     struct clientContract {
@@ -90,17 +91,18 @@ contract KhronusCoordinator is Ownable{
     mapping (bytes32 => khronAlert) alertRegistry;
 
     // contract contructor
-    constructor (address _khronAddress, uint256 _registrationDeposit,uint256 _callPrice) {
+    constructor (address _khronAddress, uint256 _registrationDeposit,uint256 _callPrice, uint256 _bandOfTolerance) {
         khronus = KhronTokenInterface(_khronAddress);
         registrationDeposit = _registrationDeposit;
         callPrice = _callPrice;
         initialRequestDeposit = (callPrice*5)/100;
         fullfillmentRate = (callPrice*45)/100;
+        bandOfTolerance = 1 minutes * _bandOfTolerance;
     }
 
     // Business Logic Function Section
 
-    /* Set Price Functions
+    /* Set Price Functions and configuration functions
     */
 
     function setCallPrice(uint256 _callPrice) external onlyOwner returns(bool){
@@ -113,6 +115,10 @@ contract KhronusCoordinator is Ownable{
         return true;
     }
 
+    function setBandOfTolerance(uint256 _bandOfTolerance) external onlyOwner returns(bool){
+        bandOfTolerance = 1 minutes * _bandOfTolerance;
+    }
+
      /* Client registration
     */
 
@@ -121,6 +127,7 @@ contract KhronusCoordinator is Ownable{
         address _owner = msg.sender;
         clientRegistry[_clientContract].owner = _owner;
         _fundClient(_owner, _clientContract, _deposit);
+        emit ClientRegistered(_clientContract,_owner, block.timestamp);
     }
     
     function _fundClient(address _ownerAddress, address _clientContract, uint256 _deposit) internal{
@@ -182,6 +189,8 @@ contract KhronusCoordinator is Ownable{
         if (_iterations <= 1){
             uint256 _iteration = 1;
             bytes memory _iterationsOrder = abi.encodePacked(_iteration,_iterations);
+            clientRegistry[_requester].credit -= initialRequestDeposit * 2;
+            clientRegistry[_requester].commitedFunds -= initialRequestDeposit * 2;
             _setKhronAlert(_requestID, _iterationsOrder, _timestamp);
         }
         else{
@@ -217,7 +226,7 @@ contract KhronusCoordinator is Ownable{
     function _isAlertCorrect(bytes32 _alertID) private returns (bool){
         uint256 _current = block.timestamp;
         uint256 _target = alertRegistry[_alertID].timestamp;
-        if (_current >= _target && _current <=_target + 59){
+        if (_current >= _target && _current <=_target + bandOfTolerance){
             return (true);
         }
         else{
@@ -249,7 +258,10 @@ contract KhronusCoordinator is Ownable{
         if (_isAlertCorrect(_alertID)) {
             nodeRegistry[_servingNode].requestsFulfilled += 1;
             khronus.transfer(_servingNode, fullfillmentRate);
+            address _clientContract = requestRegistry[alertRegistry[_alertID].requestID].clientContract;
             _processAlert(_alertID, _servingNode);
+            clientRegistry[_clientContract].credit -= fullfillmentRate *2;
+            clientRegistry[_clientContract].commitedFunds -= fullfillmentRate *2;
         }
         else {
            nodeRegistry[_servingNode].requestsFailed += 1;
@@ -302,8 +314,20 @@ contract KhronusCoordinator is Ownable{
     }
 
     // check privacy of this function in non-development release
-    function getAlertRequest(bytes32 _alertID) external view returns(bytes32, uint256){
-        return (alertRegistry[_alertID].requestID,alertRegistry[_alertID].timestamp);
+    function getAlertRequest(bytes32 _alertID) external view returns(bytes32){
+        return (alertRegistry[_alertID].requestID);
+    }
+
+    function getAlertTimestamp(bytes32 _alertID) external view returns(uint256){
+        return (alertRegistry[_alertID].timestamp);
+    }
+
+    function getClientContract(bytes32 _requestID) external view returns(address){
+        return (requestRegistry[_requestID].clientContract);
+    }
+
+    function getBandOfTolerance() external view returns (uint256){
+        return bandOfTolerance;
     }
 
     //Request to node functions
