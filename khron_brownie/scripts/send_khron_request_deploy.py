@@ -14,5 +14,5 @@ def main():
     with open ('../contract_library/contract_addresses_deployment.json') as f:
         addresses = json.load(f)
     clientContract = EscrowInfrastructure.at(addresses["KhronusClient"])
-    txt = clientContract.openEscrow(escrowBeneficiary, timestamp, agent, {'from':escrowDepositor,'value':"0.1 ether"})
+    txt = clientContract.openEscrow(escrowBeneficiary, timestamp, agent, {'from':escrowDepositor,'value':"0.05 ether"})
     print(txt.events['Transfer'][1]['data'], str(txt.events['AlertDispatched']['alertID']), timestamp)
