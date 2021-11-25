@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 import "OpenZeppelin/openzeppelin-contracts@4.0.0/contracts/token/ERC20/ERC20.sol";
-import "interfaces/ERC677.sol";
-import "interfaces/ERC677Receiver.sol";
+import "../interfaces/ERC677.sol";
+import "../interfaces/ERC677Receiver.sol";
 
 abstract contract ERC677Token is ERC20, ERC677 {
   /**
@@ -27,7 +27,9 @@ abstract contract ERC677Token is ERC20, ERC677 {
   }
 
 
-  // PRIVATE
+  /** 
+   * @dev private functions of the contract
+  **/
 
   function contractFallback(address _to, uint _value, bytes memory _data)
     private

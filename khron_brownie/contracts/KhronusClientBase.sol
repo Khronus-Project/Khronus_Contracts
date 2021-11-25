@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "interfaces/KhronusCoordinatorInterface.sol";
-import "libraries/khronTimestampUtils.sol";
+import "../interfaces/KhronusCoordinatorInterface.sol";
+import "../libraries/khronTimestampUtils.sol";
 
 
 abstract contract KhronusClient{

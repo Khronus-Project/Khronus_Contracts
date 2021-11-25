@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "interfaces/KhronTokenInterface.sol";
-import "interfaces/KhronusClientInterface.sol";
+import "../interfaces/KhronTokenInterface.sol";
+import "../interfaces/KhronusClientInterface.sol";
 import "OpenZeppelin/openzeppelin-contracts@4.0.0/contracts/access/Ownable.sol";
-import "libraries/KhronTimestampUtils.sol";
+import "../libraries/KhronTimestampUtils.sol";
 
 contract KhronusCoordinator is Ownable{
     

@@ -1,2 +1,2 @@
-networks:
+source networks:
   default: local
