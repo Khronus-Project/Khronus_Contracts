@@ -1,2 +1,11 @@
+dependencies:
+  - khronus-project/khronus_client@0.0.4
+  - khronus-project/khronus_timeCog@1.0.2
+  - OpenZeppelin/openzeppelin-contracts@4.0.0
+compiler:
+  solc:
+    remappings:
+      - "@khronus/khronus-client@0.0.4=khronus-project/khronus_client@0.0.4"
+      - "@khronus/time-cog@1.0.2=khronus-project/khronus_timeCog@1.0.2"
 source networks:
   default: local

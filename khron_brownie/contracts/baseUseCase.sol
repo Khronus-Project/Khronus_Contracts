@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "contracts/KhronusClientBase.sol";
+import "@khronus/khronus-client@0.0.3/contracts/KhronusClientBase.sol";
 
 contract EscrowInfrastructure is KhronusClient{
 
@@ -27,7 +27,6 @@ contract EscrowInfrastructure is KhronusClient{
     mapping (bytes32 => bytes32) private tabRegistry;
 
     constructor(address _coordinatorAddress)
-        public  
         KhronusClient(_coordinatorAddress){
     }
 
@@ -108,5 +107,6 @@ contract EscrowInfrastructure is KhronusClient{
             escrowRegistry[_escrowID].status = EscrowStatus.Expired;
         }
         emit EscrowExpired(_escrowID, block.timestamp, escrowRegistry[_escrowID].condition);
+        return true;
     }
 }
