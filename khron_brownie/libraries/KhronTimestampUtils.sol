@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "Khronus-Project/Khronus_TimeCog@0.9.9/libraries/KhronusTimeCog.sol";
+import "@khronus/time-cog@1.0.2/contracts/src/KhronusTimeCog.sol";
 
 library KhronTimestampUtils {
 
