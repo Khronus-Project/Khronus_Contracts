@@ -18,7 +18,7 @@ contract KhronusCoordinator is Ownable{
     event ClientRegistered(address indexed client, address indexed requester, uint256 timestamp);
     event RequestProcessed(address indexed client, bytes32 requestID, bytes data);
     event AlertDispatched(bytes32 indexed requestID,bytes32 alertID, address[2] assignedNodes);
-    event AlertFulfilled(bytes32 indexed requestID,  address indexed servingNode,bytes32 alertID, alertStatus status);  
+    event AlertFulfilled(bytes32 indexed requestID,  address indexed servingNode,bytes32 alertID, alertStatus status, uint gasCost);  
     event AlertMistaken(address indexed servingNode,bytes32 alertID, uint256 expectedTimestamp, uint256 actualTimestamp);
     event NodeRegistered(address indexed node, bytes32 index);
 
@@ -272,6 +272,7 @@ contract KhronusCoordinator is Ownable{
 
     function _processAlert(bytes32 _alertID, address _servingNode) private returns (bool) {
         bool _result;
+        uint gasCost = gasleft();
         bytes32 _requestID = alertRegistry[_alertID].requestID;
         if (alertRegistry[_alertID].status == alertStatus.notFulfilled){
             KhronusClientInterface  _khronusClient;
@@ -282,7 +283,8 @@ contract KhronusCoordinator is Ownable{
         else{
             alertRegistry[_alertID].status = alertStatus.fulfilledTwice;
         }
-        emit AlertFulfilled(_requestID, _servingNode, _alertID, alertRegistry[_alertID].status);
+        gasCost = gastCost - gasleft();
+        emit AlertFulfilled(_requestID, _servingNode, _alertID, alertRegistry[_alertID].status, gasCost);
         return _result;
     }
 

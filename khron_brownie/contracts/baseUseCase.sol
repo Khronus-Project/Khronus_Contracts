@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@khronus/khronus-client@0.0.3/contracts/KhronusClientBase.sol";
+import "@khronus/khronus-client@0.0.4/contracts/KhronusClientBase.sol";
 
 contract EscrowInfrastructure is KhronusClient{
 
