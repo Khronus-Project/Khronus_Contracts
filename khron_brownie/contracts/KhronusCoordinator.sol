@@ -3,8 +3,9 @@ pragma solidity ^0.8.0;
 
 import "../interfaces/KhronTokenInterface.sol";
 import "../interfaces/KhronusClientInterface.sol";
+import "../interfaces/KhronPriceOracleInterface.sol";
 import "OpenZeppelin/openzeppelin-contracts@4.0.0/contracts/access/Ownable.sol";
-import "../libraries/KhronTimestampUtils.sol";
+import "@khronus/time-cog@1.0.2/contracts/src/KhronusTimeCog.sol";
 
 contract KhronusCoordinator is Ownable{
     
@@ -12,14 +13,16 @@ contract KhronusCoordinator is Ownable{
 
     KhronTokenInterface private khronus;
     KhronusClientInterface private khronusClient;
+    KhronPriceOracleInterface private khronOracle;
 
     // Events
     event ClientFunded(address indexed client, address indexed requester, uint256 amount);
     event ClientRegistered(address indexed client, address indexed requester, uint256 timestamp);
     event RequestProcessed(address indexed client, bytes32 requestID, bytes data);
-    event AlertDispatched(bytes32 indexed requestID,bytes32 alertID, address[2] assignedNodes);
-    event AlertFulfilled(bytes32 indexed requestID,  address indexed servingNode,bytes32 alertID, alertStatus status, uint gasCost);  
+    event AlertDispatched(bytes32 indexed requestID,bytes32 alertID, address[2] assignedNode, uint256 gasCost);
+    event AlertFulfilled(bytes32 indexed requestID,  address indexed servingNode,bytes32 alertID, alertStatus status, uint gasCost, uint txGasPrice);  
     event AlertMistaken(address indexed servingNode,bytes32 alertID, uint256 expectedTimestamp, uint256 actualTimestamp);
+    event WorkflowCompleted(uint gasCost, uint txGasPrice);
     event NodeRegistered(address indexed node, bytes32 index);
 
     
@@ -35,13 +38,11 @@ contract KhronusCoordinator is Ownable{
         fulfilledTwice
     }
 
-    // # Data Variables
+    // Data Configuration Variables
 
-    uint256 callPrice;
-    uint256 registrationDeposit;
-    uint256 initialRequestDeposit; 
-    uint256 fullfillmentRate; 
-    uint256 bandOfTolerance;
+    uint256 registrationDeposit; //miminum khron require for registering a contract
+    uint256 initialRequestDeposit; // khron transmited as part of the deposit when setting a request
+    uint256 bandOfTolerance; // amount of time in minutes in which a dispatched alert is considered valid after its original timestamp
     
     // ## client registry
     struct clientContract {
@@ -49,7 +50,6 @@ contract KhronusCoordinator is Ownable{
         uint256 credit;
         uint256 nonce;
         uint256 standing;
-        uint256 commitedFunds;
     }
 
     mapping (address => clientContract) clientRegistry;
@@ -63,6 +63,7 @@ contract KhronusCoordinator is Ownable{
         uint256 requestsReceived;
         uint256 requestsFulfilled;
         uint256 requestsFailed;
+        uint256 balance;
         uint256 standing;
         bool registered;
     }
@@ -70,7 +71,7 @@ contract KhronusCoordinator is Ownable{
     mapping (address => nodeContract) nodeRegistry;
     mapping (bytes32 => address) nodeIndex;
 
-    // ## Requests and Alerts Registry
+    // ## Requests Alerts and Payment Registry
 
     struct khronRequest {
         address clientContract;
@@ -91,12 +92,10 @@ contract KhronusCoordinator is Ownable{
     mapping (bytes32 => khronAlert) alertRegistry;
 
     // contract contructor
-    constructor (address _khronAddress, uint256 _registrationDeposit,uint256 _callPrice, uint256 _bandOfTolerance) {
+    constructor (address _khronAddress, address _khronOracle, uint256 _registrationDeposit, uint256 _bandOfTolerance) {
         khronus = KhronTokenInterface(_khronAddress);
+        khronOracle = KhronPriceOracleInterface(_khronOracle);
         registrationDeposit = _registrationDeposit;
-        callPrice = _callPrice;
-        initialRequestDeposit = (callPrice*5)/100;
-        fullfillmentRate = (callPrice*45)/100;
         bandOfTolerance = 1 minutes * _bandOfTolerance;
     }
 
@@ -104,11 +103,6 @@ contract KhronusCoordinator is Ownable{
 
     /* Set Price Functions and configuration functions
     */
-
-    function setCallPrice(uint256 _callPrice) external onlyOwner returns(bool){
-        callPrice = _callPrice;
-        return true;
-    }
 
      function setRegistrationDeposit(uint256 _registrationDeposit) external onlyOwner returns(bool){
         registrationDeposit = _registrationDeposit;
@@ -161,36 +155,18 @@ contract KhronusCoordinator is Ownable{
     /* Request khronTab functions
     */
 
-    //estimate cost
-    function estimateKhron(TypeOfRequest _requestType, uint256 _iterations) private view returns(uint256){
-        if (_requestType == TypeOfRequest.khronTab){
-            if (_iterations <= 1) {
-                return callPrice;
-            }
-            else{
-                return callPrice * (_iterations+1);
-            }
-        }
-    }
-
     //set khron request
     function requestKhronTab(uint256 _timestamp, uint256 _iterations, string memory _khronTab) external returns(bytes32){
-        require (KhronTimestampUtils.isValidKhronTimestamp(_timestamp), "timestamp granularity is on integer minutes your timestamp was not generated through the standard functionality on client contract or you overrode the function");
-        uint256 _requestCost = estimateKhron(TypeOfRequest.khronTab, _iterations);
+        require (_isValidKhronTimestamp(_timestamp), "timestamp granularity should be on integer minutes your timestamp was not generated through the standard functionality on client contract or you overrode the function");
         address _requester = msg.sender;
         address _owner = clientRegistry[_requester].owner;
-        require (clientRegistry[_requester].credit - clientRegistry[_requester].commitedFunds >= _requestCost, "Not enough funds in contract to set request");
         bytes32 _requestID = keccak256(abi.encodePacked(_requester, clientRegistry[_requester].nonce));
-        clientRegistry[_requester].commitedFunds += _requestCost;
-        khronus.decreaseApproval(_owner, _requestCost);
         clientRegistry[_requester].nonce += 1;
         requestRegistry[_requestID].iterations = _iterations;
         requestRegistry[_requestID].clientContract = _requester;
         if (_iterations <= 1){
             uint256 _iteration = 1;
             bytes memory _iterationsOrder = abi.encodePacked(_iteration,_iterations);
-            clientRegistry[_requester].credit -= initialRequestDeposit * 2;
-            clientRegistry[_requester].commitedFunds -= initialRequestDeposit * 2;
             _setKhronAlert(_requestID, _iterationsOrder, _timestamp);
         }
         else{
@@ -201,7 +177,7 @@ contract KhronusCoordinator is Ownable{
     }
 
     /* Alerts Area
-    /   1. Utilities for creating the alerts
+    /   1. Utilities for creating and serving alerts
     /   2. Set Individual Khron Alerts
     /   3. Set Khron Tabs
     /   4. Serve krhon alerts
@@ -233,10 +209,27 @@ contract KhronusCoordinator is Ownable{
             return (false);
         }
     }
+
+    function _isValidKhronTimestamp(uint256 _timestamp) private pure returns (bool){
+        if (_timestamp % 60 == 0 && KhronusTimeCog.isValidTimestamp(_timestamp)){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
     
+    function _estimateKhron (bytes32 _alertID) private returns (uint) {
+
+    }
+
+    function _getKhronPrice() private returns (uint){
+        return khronOracle.getLatestPriceKhronETH();
+    }
 
     //set khronAlerts
     function _setKhronAlert(bytes32 _requestID, bytes memory _alertOrder, uint256 _timestamp) private {
+        uint _gasCost = gasleft(); // added just to evalute current gas cost of setting alerts
         bytes32 _alertID = keccak256(abi.encodePacked(_requestID, _alertOrder, _timestamp));
         alertRegistry[_alertID].requestID = _requestID;
         alertRegistry[_alertID].timestamp = _timestamp;
@@ -248,12 +241,16 @@ contract KhronusCoordinator is Ownable{
             _dispatchToNodes(_servingNode, _data);
             nodeRegistry[_servingNode].requestsReceived += 1;
         }
-        emit AlertDispatched(_requestID, _alertID, alertRegistry[_alertID].servingNodes);
+        _gasCost -= gasleft(); // added just to evalute current gas cost of setting alerts
+        emit AlertDispatched(_requestID, _alertID, alertRegistry[_alertID].servingNodes, _gasCost);
     }
     
     //serve khronAlerts 
     function serveKhronAlert(bytes32 _alertID) external returns (bool){
+        uint gasCost = gasleft();
+
         require(msg.sender == alertRegistry[_alertID].servingNodes[0] || msg.sender == alertRegistry[_alertID].servingNodes[1], "unauthorized Node cannot solve alert");
+        require(clientRegistry[msg.sender].credit > )
         address _servingNode = msg.sender;
         if (_isAlertCorrect(_alertID)) {
             nodeRegistry[_servingNode].requestsFulfilled += 1;
@@ -267,12 +264,14 @@ contract KhronusCoordinator is Ownable{
            nodeRegistry[_servingNode].requestsFailed += 1;
            emit AlertMistaken(_servingNode, _alertID, alertRegistry[_alertID].timestamp, block.timestamp);
         }
+        gasCost -= gasleft();
+        emit WorkflowCompleted(gasCost, tx.gasprice);
         return true;
     }
 
     function _processAlert(bytes32 _alertID, address _servingNode) private returns (bool) {
-        bool _result;
         uint gasCost = gasleft();
+        bool _result;
         bytes32 _requestID = alertRegistry[_alertID].requestID;
         if (alertRegistry[_alertID].status == alertStatus.notFulfilled){
             KhronusClientInterface  _khronusClient;
@@ -283,8 +282,8 @@ contract KhronusCoordinator is Ownable{
         else{
             alertRegistry[_alertID].status = alertStatus.fulfilledTwice;
         }
-        gasCost = gastCost - gasleft();
-        emit AlertFulfilled(_requestID, _servingNode, _alertID, alertRegistry[_alertID].status, gasCost);
+        gasCost = gasCost - gasleft();
+        emit AlertFulfilled(_requestID, _servingNode, _alertID, alertRegistry[_alertID].status, gasCost, tx.gasprice);
         return _result;
     }
 
