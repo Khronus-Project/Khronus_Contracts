@@ -223,7 +223,7 @@ contract KhronusCoordinator is Ownable{
 
     }
 
-    function _getKhronPrice() private returns (uint){
+    function _getKhronPrice() private returns (int){
         return khronOracle.getLatestPriceKhronETH();
     }
 
@@ -250,15 +250,15 @@ contract KhronusCoordinator is Ownable{
         uint gasCost = gasleft();
 
         require(msg.sender == alertRegistry[_alertID].servingNodes[0] || msg.sender == alertRegistry[_alertID].servingNodes[1], "unauthorized Node cannot solve alert");
-        require(clientRegistry[msg.sender].credit > )
+        //require(clientRegistry[msg.sender].credit > )
         address _servingNode = msg.sender;
         if (_isAlertCorrect(_alertID)) {
             nodeRegistry[_servingNode].requestsFulfilled += 1;
-            khronus.transfer(_servingNode, fullfillmentRate);
+            //khronus.transfer(_servingNode, fullfillmentRate);
             address _clientContract = requestRegistry[alertRegistry[_alertID].requestID].clientContract;
             _processAlert(_alertID, _servingNode);
-            clientRegistry[_clientContract].credit -= fullfillmentRate *2;
-            clientRegistry[_clientContract].commitedFunds -= fullfillmentRate *2;
+            //clientRegistry[_clientContract].credit -= fullfillmentRate *2;
+            //clientRegistry[_clientContract].commitedFunds -= fullfillmentRate *2;
         }
         else {
            nodeRegistry[_servingNode].requestsFailed += 1;
@@ -290,10 +290,6 @@ contract KhronusCoordinator is Ownable{
     //set khronCalendars
 
     //View functions
-
-    function getCallPrice() external view returns (uint256){
-        return callPrice;
-    }
     
     function getNodeFromIndex(bytes32 _index) external view returns(address){
         return nodeIndex[_index];
@@ -305,9 +301,9 @@ contract KhronusCoordinator is Ownable{
     }
 
     // check privacy of this function in non-development release
-    function commitedFundsOf(address _clientContract) external view returns(uint256){
-        return clientRegistry[_clientContract].commitedFunds;
-    }
+    //function commitedFundsOf(address _clientContract) external view returns(uint256){
+    //    return clientRegistry[_clientContract].commitedFunds;
+    //}
 
     // check privacy of this function in non-development release
     function getAlertServers(bytes32 _alertID) external view returns(address[2] memory){
