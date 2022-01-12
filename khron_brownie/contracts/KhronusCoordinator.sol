@@ -248,7 +248,10 @@ contract KhronusCoordinator is Ownable{
     
     //serve khronAlerts 
     function serveKhronAlert(bytes32 _alertID) external returns (bool){
-        uint gasCost = gasleft(); //for gas estimation
+        uint gasCost = gasleft();
+
+        require(msg.sender == alertRegistry[_alertID].servingNodes[0] || msg.sender == alertRegistry[_alertID].servingNodes[1], "unauthorized Node cannot solve alert");
+        //require(clientRegistry[msg.sender].credit > )
         address _servingNode = msg.sender;
         address _clientContract = requestRegistry[alertRegistry[_alertID].requestID].clientContract;
         uint estimatedGas = gasCost;
@@ -256,8 +259,11 @@ contract KhronusCoordinator is Ownable{
         require(clientRegistry[_clientContract].credit >= registrationDeposit, "Current credit in client contract is below minimum threshold");
         if (_isAlertCorrect(_alertID)) {
             nodeRegistry[_servingNode].requestsFulfilled += 1;
+            //khronus.transfer(_servingNode, fullfillmentRate);
+            address _clientContract = requestRegistry[alertRegistry[_alertID].requestID].clientContract;
             _processAlert(_alertID, _servingNode);
-            estimatedGas -= gasleft();
+            //clientRegistry[_clientContract].credit -= fullfillmentRate *2;
+            //clientRegistry[_clientContract].commitedFunds -= fullfillmentRate *2;
         }
         else {
            nodeRegistry[_servingNode].requestsFailed += 1;
@@ -298,6 +304,11 @@ contract KhronusCoordinator is Ownable{
     function creditOf(address _clientContract) external view returns (uint256){
         return clientRegistry[_clientContract].credit;
     }
+
+    // check privacy of this function in non-development release
+    //function commitedFundsOf(address _clientContract) external view returns(uint256){
+    //    return clientRegistry[_clientContract].commitedFunds;
+    //}
 
     // check privacy of this function in non-development release
     function getAlertServers(bytes32 _alertID) external view returns(address[2] memory){
