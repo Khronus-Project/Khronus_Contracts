@@ -1,0 +1,18 @@
+benchmark records a boolean to true
+{'transaction_id': '0xe490895d3c4a2cce6e7aa86cdd2f1c2762bc6ad98b5a165fe64648f1e159761b', 'transaction_gas': 93438, 'estimated_gas': 81494, 'gas_difference_escrow': 11944}
+{'b_transaction_id': '0x865bca440f0f83c1b056e17deddf5951f99f218e4e3dd47eeeb24b8a3adf5449', 'b_transaction_gas': 90988, 'b_estimated_gas': 64044, 'b_gas_difference_escrow': 26944}
+benchmark does nothing just passes empty
+{'transaction_id': '0xce4a2707cb71abe0e4b1e5dd22a189cd53890e7e8b8bfba07f633b87e1964e1b', 'transaction_gas': 93438, 'estimated_gas': 81494, 'gas_difference_escrow': 11944}
+{'b_transaction_id': '0xf63e8c811d41d8f51192fb9c800effabd0eb01e70a266b027c01d49c98113484', 'b_transaction_gas': 70077, 'b_estimated_gas': 43133, 'b_gas_difference_escrow': 26944}
+benchmark resets a boolean to false
+{'transaction_id': '0x69ab0df0d53de7fbc13e07781239a60f2340911a6ff1ff340219a41b1e89b093', 'transaction_gas': 93438, 'estimated_gas': 81494, 'gas_difference_escrow': 11944}
+{'b_transaction_id': '0xeadd1da505f99906f107426f69e2f73df5f5138f38d47709314fe5b5b5f0ffe1', 'b_transaction_gas': 60982, 'b_estimated_gas': 49038, 'b_gas_difference_escrow': 11944}
+benchmark resets a boolean to false - client cancels the actions that end in refund
+{'transaction_id': '0xdd5405fb9541ca0e08c6be977356f279d00e2e84df8a706d9f1fd59da3e694dc', 'transaction_gas': 97533, 'estimated_gas': 70589, 'gas_difference_escrow': 26944}
+{'b_transaction_id': '0x02452c186931c4bf27810bb73b2ec09414ba58a7f2bf780c13485f420a85fbac', 'b_transaction_gas': 60982, 'b_estimated_gas': 49038, 'b_gas_difference_escrow': 11944}
+benchmark records a boolean to true - client cancels the actions that end in refund
+{'transaction_id': '0x9703c98cf4327362917496c79647c11df4b358a62d6a15abd75c8c444b2e172c', 'transaction_gas': 97533, 'estimated_gas': 70589, 'gas_difference_escrow': 26944}
+{'b_transaction_id': '0xea874d20cd356b273ca203fd70e0c08d4ce17945992fd1b8ce34bc604d28a4fa', 'b_transaction_gas': 90988, 'b_estimated_gas': 64044, 'b_gas_difference_escrow': 26944}
+benchmark does nothing just passes empty - client cancels the actions that end in refund
+{'transaction_id': '0xcf7af25c9e72fc3f7b1d9e0bf1912e1e46b9fd93c7473c48390b17fa6c92fad4', 'transaction_gas': 97533, 'estimated_gas': 70589, 'gas_difference_escrow': 26944}
+{'b_transaction_id': '0x3908d160d03c1e9f72480abc86b7b245d519b6beca81241c837a32b5f57bffd7', 'b_transaction_gas': 70077, 'b_estimated_gas': 43133, 'b_gas_difference_escrow': 26944}

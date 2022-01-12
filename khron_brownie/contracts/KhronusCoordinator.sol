@@ -22,7 +22,7 @@ contract KhronusCoordinator is Ownable{
     event AlertDispatched(bytes32 indexed requestID,bytes32 alertID, address[2] assignedNode, uint256 gasCost);
     event AlertFulfilled(bytes32 indexed requestID,  address indexed servingNode,bytes32 alertID, alertStatus status, uint gasCost, uint txGasPrice);  
     event AlertMistaken(address indexed servingNode,bytes32 alertID, uint256 expectedTimestamp, uint256 actualTimestamp);
-    event WorkflowCompleted(uint gasCost, uint txGasPrice);
+    event WorkflowCompleted(uint gasCost, uint partialGas, uint txGasPrice);
     event NodeRegistered(address indexed node, bytes32 index);
 
     
@@ -99,7 +99,7 @@ contract KhronusCoordinator is Ownable{
         bandOfTolerance = 1 minutes * _bandOfTolerance;
     }
 
-    // Business Logic Function Section
+    // Business Logic Functions Section
 
     /* Set Price Functions and configuration functions
     */
@@ -111,6 +111,7 @@ contract KhronusCoordinator is Ownable{
 
     function setBandOfTolerance(uint256 _bandOfTolerance) external onlyOwner returns(bool){
         bandOfTolerance = 1 minutes * _bandOfTolerance;
+        return true;
     }
 
      /* Client registration
@@ -157,9 +158,9 @@ contract KhronusCoordinator is Ownable{
 
     //set khron request
     function requestKhronTab(uint256 _timestamp, uint256 _iterations, string memory _khronTab) external returns(bytes32){
-        require (_isValidKhronTimestamp(_timestamp), "timestamp granularity should be on integer minutes your timestamp was not generated through the standard functionality on client contract or you overrode the function");
         address _requester = msg.sender;
-        address _owner = clientRegistry[_requester].owner;
+        require (_isValidKhronTimestamp(_timestamp), "Your target timestamp is in the past or has a granularity of less than one minute");
+        require(clientRegistry[_requester].credit >= registrationDeposit, "Not enough Khron to make this request");
         bytes32 _requestID = keccak256(abi.encodePacked(_requester, clientRegistry[_requester].nonce));
         clientRegistry[_requester].nonce += 1;
         requestRegistry[_requestID].iterations = _iterations;
@@ -223,7 +224,7 @@ contract KhronusCoordinator is Ownable{
 
     }
 
-    function _getKhronPrice() private returns (uint){
+    function _getKhronPrice() private returns (int){
         return khronOracle.getLatestPriceKhronETH();
     }
 
@@ -233,7 +234,7 @@ contract KhronusCoordinator is Ownable{
         bytes32 _alertID = keccak256(abi.encodePacked(_requestID, _alertOrder, _timestamp));
         alertRegistry[_alertID].requestID = _requestID;
         alertRegistry[_alertID].timestamp = _timestamp;
-        string memory _eventTaskCode = '102'; //hardcoded CRUD event code 1 of task 02
+        string memory _eventTaskCode = '102'; //hardcoded CRUD event code 1 of task 02. This needs to be redesigned to use a fixed lenght string.
         bytes memory _data = abi.encodePacked(_requestID, _alertID, _timestamp, _alertOrder, _eventTaskCode);
         for (uint256 _servingNodeI = 0; _servingNodeI < 2; _servingNodeI ++){
             address _servingNode = _getServingNode();
@@ -247,25 +248,23 @@ contract KhronusCoordinator is Ownable{
     
     //serve khronAlerts 
     function serveKhronAlert(bytes32 _alertID) external returns (bool){
-        uint gasCost = gasleft();
-
-        require(msg.sender == alertRegistry[_alertID].servingNodes[0] || msg.sender == alertRegistry[_alertID].servingNodes[1], "unauthorized Node cannot solve alert");
-        require(clientRegistry[msg.sender].credit > )
+        uint gasCost = gasleft(); //for gas estimation
         address _servingNode = msg.sender;
+        address _clientContract = requestRegistry[alertRegistry[_alertID].requestID].clientContract;
+        uint estimatedGas = gasCost;
+        require(_servingNode == alertRegistry[_alertID].servingNodes[0] || _servingNode == alertRegistry[_alertID].servingNodes[1], "unauthorized Node cannot solve alert");
+        require(clientRegistry[_clientContract].credit >= registrationDeposit, "Current credit in client contract is below minimum threshold");
         if (_isAlertCorrect(_alertID)) {
             nodeRegistry[_servingNode].requestsFulfilled += 1;
-            khronus.transfer(_servingNode, fullfillmentRate);
-            address _clientContract = requestRegistry[alertRegistry[_alertID].requestID].clientContract;
             _processAlert(_alertID, _servingNode);
-            clientRegistry[_clientContract].credit -= fullfillmentRate *2;
-            clientRegistry[_clientContract].commitedFunds -= fullfillmentRate *2;
+            estimatedGas -= gasleft();
         }
         else {
            nodeRegistry[_servingNode].requestsFailed += 1;
            emit AlertMistaken(_servingNode, _alertID, alertRegistry[_alertID].timestamp, block.timestamp);
         }
         gasCost -= gasleft();
-        emit WorkflowCompleted(gasCost, tx.gasprice);
+        emit WorkflowCompleted(gasCost, estimatedGas, tx.gasprice);
         return true;
     }
 
@@ -290,10 +289,6 @@ contract KhronusCoordinator is Ownable{
     //set khronCalendars
 
     //View functions
-
-    function getCallPrice() external view returns (uint256){
-        return callPrice;
-    }
     
     function getNodeFromIndex(bytes32 _index) external view returns(address){
         return nodeIndex[_index];
@@ -302,11 +297,6 @@ contract KhronusCoordinator is Ownable{
     // check privacy of this function in non-development release
     function creditOf(address _clientContract) external view returns (uint256){
         return clientRegistry[_clientContract].credit;
-    }
-
-    // check privacy of this function in non-development release
-    function commitedFundsOf(address _clientContract) external view returns(uint256){
-        return clientRegistry[_clientContract].commitedFunds;
     }
 
     // check privacy of this function in non-development release
@@ -345,7 +335,7 @@ contract KhronusCoordinator is Ownable{
 
 
     function _dispatchToNodes(
-        address _nodeContract, //this has to be a khron token recipient identifies the khron_node handling the request 
+        address _nodeContract, //this identifies the khron_node handling the request has to be a khron token recipient
         bytes memory _data
         )
         private
