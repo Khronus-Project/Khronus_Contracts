@@ -128,6 +128,8 @@ def test_multiple_call_credits_happy_path(constants, current_utc_timestamp):
         txt = client_contract.openEscrow(escrow_beneficiary, timestamp, agent,{'from':escrow_depositor})
     assert i == 9
 
+#Commenting test that needs to be completely refactored or eliminated
+
 def test_multiple_call_credits_exception(constants, current_utc_timestamp):
     # Set up constants for testing
     token_contract = constants["Token_Contract"]
