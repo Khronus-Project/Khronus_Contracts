@@ -39,6 +39,7 @@ def main():
         txt_serve =node_contract.fulfillAlert(alert_ID, {'from':mock_node})
         print(f'Pure fulfillment cost is {txt_serve.events["AlertFulfilled"]["gasCost"]}')
         print(f'Workflow completed cost is {txt_serve.events["WorkflowCompleted"]["gasCost"]}')
+        print(f'Estimated gas cost is {txt_serve.events["WorkflowCompleted"]["accountedGas"]}')
     except Exception as e:
         print(e.message)
     print(f"Status of Escrow after fulfillment is {client_contract.getStatus(txt_request.events['EscrowCreated']['escrowID'])}")

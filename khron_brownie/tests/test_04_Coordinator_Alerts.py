@@ -19,7 +19,6 @@ def test_alert_operation_happyPath(constants, current_utc_timestamp):
     client_contract = constants["Client_Contract"]
     nodeContract_0 = constants["Node_Contracts"][0]
     nodeContract_1 = constants["Node_Contracts"][1]
-    call_price = constants["Call_Price"]
     escrow_depositor = accounts[2]
     escrow_beneficiary = accounts[3]
     minutes_to_clearance = 1
@@ -43,5 +42,5 @@ def test_alert_operation_happyPath(constants, current_utc_timestamp):
     logger(data)
     # Assertion
     assert escrow_beneficiary.balance() == eth_balance_beneficiary + escrow_amount
-    assert token_contract.balanceOf(nodeContract_0.address) == khron_balance_node_0 + (call_price/2)
+    #assert token_contract.balanceOf(nodeContract_0.address) == khron_balance_node_0 + (call_price/2)
 

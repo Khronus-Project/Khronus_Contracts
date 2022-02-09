@@ -1,0 +1,19 @@
+Everything working properly in client transaction main
+We have an issue estimating client transaction redundancy, details as follows:
+total gas is 65332, pure fulfillment gas is 7670, workflow completed is 38831, 
+estimated gas is 49420, fulfillment - workflow = 31161, total gas - estimated gas = 15912
+Everything working properly in benchmark transaction
+We have an issue estimating benchmark transaction redundancy, details as follows:
+total gas is 50332, pure fulfillment gas is 7670, workflow completed is 23831, 
+estimated gas is 49420, fulfillment - workflow = 16161, total gas - estimated gas = 912
+
+We have an issue estimating client transaction main, details as follows:
+total gas is 77955, pure fulfillment gas is 51205, workflow completed is 66454, 
+estimated gas is 92955, fulfillment - workflow = 15249, total gas - estimated gas = -15000
+We have an issue estimating client transaction redundancy, details as follows:
+total gas is 50332, pure fulfillment gas is 7670, workflow completed is 23831, 
+estimated gas is 49420, fulfillment - workflow = 16161, total gas - estimated gas = 912
+Everything working properly in benchmark transaction
+We have an issue estimating benchmark transaction redundancy, details as follows:
+total gas is 50332, pure fulfillment gas is 7670, workflow completed is 23831, 
+estimated gas is 49420, fulfillment - workflow = 16161, total gas - estimated gas = 912
