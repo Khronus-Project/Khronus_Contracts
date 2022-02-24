@@ -5,5 +5,5 @@ interface KhronPriceOracleInterface {
     function getLatestPriceKhronETH() 
         external 
         view 
-        returns (int);
+        returns (uint);
 }

@@ -9,7 +9,7 @@ contract EscrowInfrastructure is KhronusClient{
     event EscrowExpired(bytes32 indexed escrowID, uint256 timeStamp, bool conditionStatus);
     event ConditionChanged(bytes32 indexed escrowID, uint256 timeStamp, bool conditionStatus);
 
-    enum EscrowStatus {Expired, Open}
+    enum EscrowStatus {Open, Expired}
 
     struct escrow {
         uint256 balance;

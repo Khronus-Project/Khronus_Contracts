@@ -127,35 +127,3 @@ def test_multiple_call_credits_happy_path(constants, current_utc_timestamp):
     for i in range(10):
         txt = client_contract.openEscrow(escrow_beneficiary, timestamp, agent,{'from':escrow_depositor})
     assert i == 9
-
-def test_multiple_call_credits_exception(constants, current_utc_timestamp):
-    # Set up constants for testing
-    token_contract = constants["Token_Contract"]
-    coordinator_contract = constants["Coordinator_Contract"]
-    client_contract = constants["Client_Contract"]
-    client_owner = constants["Client_Owner"]
-    escrow_depositor = accounts[2]
-    escrow_beneficiary = accounts[3]
-    node_owner_0 = accounts[4]
-    node_owner_1 = accounts[5]
-    registration_deposit = 1*10**18
-    minutes_to_clearance = 1
-    timestamp = current_utc_timestamp +(minutes_to_clearance*60)
-    agent = accounts[0]
-    # Set environment for testing
-    token_contract.increaseApproval(coordinator_contract.address, registration_deposit, {'from':client_owner})
-    coordinator_contract.registerClient(client_contract.address, registration_deposit, {'from':client_owner})
-    node_contract_0 = TestKhronusNode.deploy(coordinator_contract.address, {'from':node_owner_0})
-    node_contract_1 = TestKhronusNode.deploy(coordinator_contract.address, {'from':node_owner_1})
-    coordinator_contract.registerNode(node_contract_0.address,{'from':node_owner_0})
-    coordinator_contract.registerNode(node_contract_1.address,{'from':node_owner_1})
-    result = ""
-    try:
-        for i in range(11):
-            txt = client_contract.openEscrow(escrow_beneficiary, timestamp, agent,{'from':escrow_depositor})
-    except Exception as e:
-        result = e.message
-        data = {"message":result}
-        logger(data)
-    #assert result == 'VM Exception while processing transaction: revert Not enough funds in contract to set request'
-    

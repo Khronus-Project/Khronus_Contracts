@@ -41,11 +41,13 @@ contract KhronPriceOracle {
         return price;
     }
 
-    function getLatestPriceKhronETH() external view returns (int) {
+    function getLatestPriceKhronETH() external view returns (uint) {
+        uint result;
         int priceEth = _getLatestPriceEth();
         int priceMatic = _getLatestPriceMatic();
         int price = (priceMatic * 1e18) /priceEth;
-        return price;
+        price > 0 ? result = uint(price): result = 0;
+        return result;
     }
 
 }
