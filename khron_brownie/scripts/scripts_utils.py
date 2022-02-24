@@ -35,7 +35,7 @@ def khron_constants_client():
 
 def khron_contants_operations():
     total_client_tokens = 100*10**18
-    registration_deposit = 1*10**18
+    registration_deposit = 5*10**18
     tolerance_band = 5
     khron_owner = accounts[0]
     client_owner = accounts[1]
