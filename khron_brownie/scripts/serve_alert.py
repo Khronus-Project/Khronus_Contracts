@@ -16,7 +16,7 @@ def main():
     agent = accounts[0]
     mock_node = accounts[0]
     timestamp = current_closest_minute() + 60
-    with open ('../contract_library/contract_addresses.json') as f:
+    with open ('../contract_library/contract_addresses_local.json') as f:
         addresses = json.load(f)
     token_contract = KhronToken.at(addresses["KhronToken"])
     coordinator_contract = KhronusCoordinator.at(addresses["KhronusCoordinator"])

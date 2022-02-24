@@ -2,15 +2,7 @@ from brownie import accounts, KhronusCoordinator, EscrowInfrastructure, BasicCli
 import json
 from time import sleep
 from datetime import datetime, timezone
-
-class Served_Alert_Tx:
-    def __init__(self, served_alert_tx, transaction_label) -> None:
-        self.transaction_label = transaction_label
-        self.gas_used = served_alert_tx.gas_used
-        self.gas_workflow_completed = served_alert_tx.events["WorkflowCompleted"]["gasCost"]
-        self.gas_estimated = served_alert_tx.events["WorkflowCompleted"]["accountedGas"]
-        self.delta_used_estimated = self.gas_used - self.gas_estimated
-        self.estimation_correct = self.delta_used_estimated == 0
+from scripts.scripts_utils import Served_Alert_Tx;
 
 def current_closest_minute():
     current_timestamp = int(datetime.now(timezone.utc).timestamp())
@@ -26,7 +18,7 @@ def main():
     mock_node_0 = accounts[0]
     mock_node_1 = accounts[9]
     timestamp = current_closest_minute() + 60
-    with open ('../contract_library/contract_addresses_gas.json') as f:
+    with open ('../contract_library/contract_addresses_local.json') as f:
         addresses = json.load(f)
     token_contract = KhronToken.at(addresses["KhronToken"])
     coordinator_contract = KhronusCoordinator.at(addresses["KhronusCoordinator"])
@@ -41,13 +33,13 @@ def main():
     sleep(60)
     print(f"Alerts are being fulfilled at {current_closest_minute()}")
     try: 
-        serve_alert_client_1 =node_contract_0.fulfillAlert(alert_ID_client_1, {'from':mock_node_0})
+        serve_alert_client_1 =node_contract_0.fulfillAlert(alert_ID_client_1, {'from':mock_node_0,  "gas_price":"1 gwei"})
         served_alert_client_1 = Served_Alert_Tx(serve_alert_client_1, "client_main_first")
-        re_serve_alert_client_1 =node_contract_1.fulfillAlert(alert_ID_client_1, {'from':mock_node_1})
+        re_serve_alert_client_1 =node_contract_1.fulfillAlert(alert_ID_client_1, {'from':mock_node_1,  "gas_price":"1 gwei"})
         re_served_alert_client_1 = Served_Alert_Tx(re_serve_alert_client_1, "client_sec_first")
-        serve_alert_benchmark_1 =node_contract_0.fulfillAlert(alert_ID_benchmark_1, {'from':mock_node_0})
+        serve_alert_benchmark_1 =node_contract_0.fulfillAlert(alert_ID_benchmark_1, {'from':mock_node_0,  "gas_price":"1 gwei"})
         served_alert_benchmark_1 = Served_Alert_Tx(serve_alert_benchmark_1, "benchmark_main_first")
-        re_serve_alert_benchmark_1 =node_contract_1.fulfillAlert(alert_ID_benchmark_1, {'from':mock_node_1})
+        re_serve_alert_benchmark_1 =node_contract_1.fulfillAlert(alert_ID_benchmark_1, {'from':mock_node_1,  "gas_price":"1 gwei"})
         re_served_alert_benchmark_1 = Served_Alert_Tx(re_serve_alert_benchmark_1, "benchmark_sec_first")
     except Exception as e:
         print(e)
@@ -59,19 +51,22 @@ def main():
     sleep(60)
     print(f"Alerts are being fulfilled at {current_closest_minute()}")
     try: 
-        serve_alert_client_2 =node_contract_0.fulfillAlert(alert_ID_client_2, {'from':mock_node_0})
+        serve_alert_client_2 =node_contract_0.fulfillAlert(alert_ID_client_2, {'from':mock_node_0,  "gas_price":"1 gwei"})
         served_alert_client_2 = Served_Alert_Tx(serve_alert_client_2, "client_main_second")
-        re_serve_alert_client_2 =node_contract_1.fulfillAlert(alert_ID_client_2, {'from':mock_node_1})
+        test_balance = mock_node_1.balance()
+        re_serve_alert_client_2 =node_contract_1.fulfillAlert(alert_ID_client_2, {'from':mock_node_1,  "gas_price":"1 gwei"})
+        test_balance_01 = mock_node_1.balance()
         re_served_alert_client_2 = Served_Alert_Tx(re_serve_alert_client_2, "client_sec_second")
-        serve_alert_benchmark_2 =node_contract_0.fulfillAlert(alert_ID_benchmark_2, {'from':mock_node_0})
+        serve_alert_benchmark_2 =node_contract_0.fulfillAlert(alert_ID_benchmark_2, {'from':mock_node_0,  "gas_price":"1 gwei"})
         served_alert_benchmark_2 = Served_Alert_Tx(serve_alert_benchmark_2, "benchmark_main_second")
-        re_serve_alert_benchmark_2 =node_contract_1.fulfillAlert(alert_ID_benchmark_2, {'from':mock_node_1})
+        re_serve_alert_benchmark_2 =node_contract_1.fulfillAlert(alert_ID_benchmark_2, {'from':mock_node_1,  "gas_price":"1 gwei"})
         re_served_alert_benchmark_2 = Served_Alert_Tx(re_serve_alert_benchmark_2, "benchmark_sec_second")
     except Exception as e:
         print(e)
     result = {"First_Serving":[vars(served_alert_client_1),vars(re_served_alert_client_1),vars(served_alert_benchmark_1),vars(re_served_alert_benchmark_1)],"Second_Serving":[vars(served_alert_client_2),vars(re_served_alert_client_2),vars(served_alert_benchmark_2),vars(re_served_alert_benchmark_2)]}
     with open ('../References/gas_measures.json','w') as f:
         json.dump(result, f)
+    print(f"test balance = {test_balance, test_balance_01, re_serve_alert_client_2.gas_price} actual balance = {re_serve_alert_client_2.gas_used}")
     print(f"Trace of new protocol first served, total gas {serve_alert_client_1.gas_used} ")
     serve_alert_client_1.call_trace(True)
     print(f"Trace of new protocol second served, , total gas {re_serve_alert_client_1.gas_used} ")

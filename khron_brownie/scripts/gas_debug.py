@@ -1,18 +1,18 @@
-import pytest
 from datetime import datetime, timezone
 from brownie import accounts
-from testing_utils import logger, khron_contants_operations
+from scripts.scripts_utils import khron_contants_operations
 from time import sleep
 
-@pytest.fixture
+def main():
+    debug_alert_operation_happyPath(constants=constants(),current_utc_timestamp=current_utc_timestamp())
+
 def constants():
     return khron_contants_operations()
 
-@pytest.fixture
 def current_utc_timestamp():
     return int(datetime.now(timezone.utc).timestamp())
 
-def test_alert_operation_happyPath(constants, current_utc_timestamp): 
+def debug_alert_operation_happyPath(constants, current_utc_timestamp): 
     # Set up constants for testing
     token_contract = constants["Token_Contract"]
     coordinator_contract = constants["Coordinator_Contract"]
@@ -51,8 +51,10 @@ def test_alert_operation_happyPath(constants, current_utc_timestamp):
     testing_data = {'Test':'KhronAlertOperations','TestTime':datetime.utcnow().ctime(), 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Client":client_contract.address, "Nodes":[nodeContract_0.address, nodeContract_1.address]}}
     #Test Log
     data = {"transaction_gas":txt_serve_alert.gas_used, "gas_fee":consumed_gas_fee, "compensation_khron":compensation_khron, "expected_khron":expected_khron, "difference_khron":difference_khron, "band_of_tolerance":band_of_tolerance, "Events":events_of_interest}
-    logger(data)
     # Assertion
     #assert escrow_beneficiary.balance() == eth_balance_beneficiary + escrow_amount
-    assert compensation_khron ==  expected_khron
+    print(f"compensation paid = {compensation_khron} expected compensation =  {expected_khron}") 
+    print(data)
+    txt_serve_alert.call_trace(True)
+
 
