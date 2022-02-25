@@ -116,6 +116,7 @@ contract KhronusCoordinator is Ownable{
         uint256 timestamp;
         alertStatus status;
         address[2] servingNodes;
+        mapping (address => bool) servedBy;
     }
 
     mapping (bytes32 => khronAlert) alertRegistry;
@@ -126,7 +127,7 @@ contract KhronusCoordinator is Ownable{
         khronOracle = KhronPriceOracleInterface(_khronOracle);
         registrationDeposit = _registrationDeposit;
         bandOfTolerance = 1 minutes * _bandOfTolerance;
-        protocolGasConstant = 52911;
+        protocolGasConstant = 75726; //current platform standard gas execution
         operatorMarkupPC = 10;
     }
 
@@ -190,7 +191,7 @@ contract KhronusCoordinator is Ownable{
     */
 
     function registerNode(address _nodeAddress) external returns (bytes32){
-        require (nodeRegistry[_nodeAddress].registered == false);
+        require (nodeRegistry[_nodeAddress].registered == false, "Node is already registered");
         address _owner = msg.sender;
         bytes32 _index = keccak256(abi.encodePacked(nodeCorrelative,address(this)));
         nodeIndex[_index] = _nodeAddress;
@@ -294,6 +295,7 @@ contract KhronusCoordinator is Ownable{
         uint gasAdjuster; // needed when there are initiation fees to pay regarding the payee;
         address _servingNode = msg.sender;
         require(_servingNode == alertRegistry[_alertID].servingNodes[0] || _servingNode == alertRegistry[_alertID].servingNodes[1], "unauthorized Node cannot solve alert");
+        require(!alertRegistry[_alertID].servedBy[_servingNode],"Alert was already served by this node");
         address _operator = nodeRegistry[_servingNode].owner;
         address _clientContract = requestRegistry[alertRegistry[_alertID].requestID].clientContract;
         if (_isAlertCorrect(_alertID)) {
@@ -306,6 +308,7 @@ contract KhronusCoordinator is Ownable{
            nodeRegistry[_servingNode].requestsFailed += 1;
            emit AlertMistaken(_servingNode, _alertID, alertRegistry[_alertID].timestamp, block.timestamp);
         }
+        alertRegistry[_alertID].servedBy[_servingNode] = true;
         gasCost -= gasleft();
         emit WorkflowCompleted(gasCost, _gasSpent, tx.gasprice);
         return true;

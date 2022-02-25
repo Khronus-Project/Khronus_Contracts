@@ -38,7 +38,7 @@ def khron_constants_node():
     node_contract_1 = TestKhronusNode.deploy(coordinator_contract.address, {'from':node_owner_1})
     node_constants={"Token_Contract":token_contract,
                     "Coordinator_Contract":coordinator_contract, 
-                    "Node_Contracts":[node_contract_0, node_contract_0],
+                    "Node_Contracts":[node_contract_0, node_contract_1],
                     "Khron_Owner":khron_owner,
                     "Node_Owners":[node_owner_0,node_owner_1]
                     }
@@ -68,7 +68,7 @@ def khron_contants_operations():
     operations_constants = {"Token_Contract":token_contract,
                             "Coordinator_Contract":coordinator_contract, 
                             "Client_Contract":client_contract,
-                            "Node_Contracts":[node_contract_0, node_contract_0],
+                            "Node_Contracts":[node_contract_0, node_contract_1],
                             "Khron_Owner":khron_owner,
                             "Client_Owner":client_owner,
                             "Node_Operators":[node_owner_0,node_owner_1],

@@ -45,9 +45,10 @@ def test_register_node_twice_error(constants,current_utc_timestamp):
         # Assertion
     except Exception as e:
         data = {'Test':'register_node','TestTime':current_time, 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Node":node_contract.address}, "Exception":e.message}
-        logger(data)
-        isValid = False
+        value = e.message
+        logger(e.message)
+       
         # Assertion
-    assert not isValid
+    assert value == "VM Exception while processing transaction: revert Node is already registered"
     
     
