@@ -40,14 +40,14 @@ def test_register_node_twice_error(constants,current_utc_timestamp):
     try:
         txt = coordinator_contract.registerNode(node_contract.address,{'from':node_owner_1})
         node_index = txt.return_value
-        data = {'Test':'register_node','TestTime':current_time, 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Node":node_contract.address}, "Events":txt.events}
+        data = {'Test':'register_node_twice','TestTime':current_time, 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Node":node_contract.address}, "Events":txt.events}
         logger(data)
         # Assertion
     except Exception as e:
-        data = {'Test':'register_node','TestTime':current_time, 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Node":node_contract.address}, "Exception":e.message}
+        data = {'Test':'register_node_twice','TestTime':current_time, 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Node":node_contract.address}, "Exception":e.message}
+        value = e.message
         logger(data)
-        isValid = False
         # Assertion
-    assert not isValid
+    assert value == "VM Exception while processing transaction: revert Node is already registered"
     
     
