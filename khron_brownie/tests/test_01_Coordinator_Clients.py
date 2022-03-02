@@ -16,12 +16,12 @@ def test_register_client(constants, current_utc_timestamp):
     coordinator_contract = constants["Coordinator_Contract"]
     client_contract = constants["Client_Contract"]
     client_owner = constants["Client_Owner"]
-    registration_deposit = 1*10**18
+    registration_deposit = constants["Registration_Deposit"]
     # Test Body
     client_owner_balance = token_contract.balanceOf(client_owner.address)
     client_owner_allowance = token_contract.allowance(coordinator_contract.address, client_owner.address)
     coordinator_balance = token_contract.balanceOf(coordinator_contract.address)
-    client_contract_balance = coordinator_contract.creditOf(client_contract.address)
+    client_contract_balance = coordinator_contract.getKhronBalanceOf(client_contract.address)
     token_contract.increaseApproval(coordinator_contract.address, registration_deposit, {'from':client_owner})
     txt = coordinator_contract.registerClient(client_contract.address, registration_deposit, {'from':client_owner})
     #Test Log
@@ -31,8 +31,7 @@ def test_register_client(constants, current_utc_timestamp):
     # Assertion
     assert token_contract.balanceOf(client_owner.address) == client_owner_balance - registration_deposit
     assert token_contract.balanceOf(coordinator_contract.address) == coordinator_balance + registration_deposit
-    assert token_contract.allowance(coordinator_contract.address, client_owner.address) == client_owner_allowance + registration_deposit
-    assert coordinator_contract.creditOf(client_contract.address) == client_contract_balance + registration_deposit
+    assert coordinator_contract.getKhronBalanceOf(client_contract.address) == client_contract_balance + registration_deposit
 
 def test_fund_client(constants, current_utc_timestamp):
     # Set up constants for testing
@@ -40,7 +39,7 @@ def test_fund_client(constants, current_utc_timestamp):
     coordinator_contract = constants["Coordinator_Contract"]
     client_contract = constants["Client_Contract"]
     client_owner = constants["Client_Owner"]
-    registration_deposit = 1*10**18
+    registration_deposit = constants["Registration_Deposit"]
     client_credit_tokens = 50*10**18
     token_contract.increaseApproval(coordinator_contract.address, registration_deposit, {'from':client_owner})
     coordinator_contract.registerClient(client_contract.address, registration_deposit, {'from':client_owner})
@@ -48,7 +47,7 @@ def test_fund_client(constants, current_utc_timestamp):
     client_owner_balance = token_contract.balanceOf(client_owner.address)
     client_owner_allowance = token_contract.allowance(coordinator_contract.address, client_owner.address)
     coordinator_balance = token_contract.balanceOf(coordinator_contract.address)
-    client_contract_balance = coordinator_contract.creditOf(client_contract.address)
+    client_contract_balance = coordinator_contract.getKhronBalanceOf(client_contract.address)
     token_contract.increaseApproval(coordinator_contract.address, client_credit_tokens, {'from':client_owner})
     txt = coordinator_contract.fundClient(client_contract.address, client_credit_tokens, {'from':client_owner})
     #Test Log
@@ -58,5 +57,4 @@ def test_fund_client(constants, current_utc_timestamp):
     # Assertion
     assert token_contract.balanceOf(client_owner.address) == client_owner_balance - client_credit_tokens
     assert token_contract.balanceOf(coordinator_contract.address) == coordinator_balance + client_credit_tokens
-    assert token_contract.allowance(coordinator_contract.address, client_owner.address) == client_owner_allowance + client_credit_tokens
-    assert coordinator_contract.creditOf(client_contract.address) == client_contract_balance + client_credit_tokens
+    assert coordinator_contract.getKhronBalanceOf(client_contract.address) == client_contract_balance + client_credit_tokens

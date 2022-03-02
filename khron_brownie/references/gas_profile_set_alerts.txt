@@ -1,0 +1,3 @@
+Data regarding the use of gas for set alerts
+{'total_open_escrow_gas': 402201, 'escrow_set_alert_gas': 159235, 'difference': 242966}
+{'b_total_open_tab_gas': 299289, 'b_set_alert_gas': 200655, 'difference': 98634}

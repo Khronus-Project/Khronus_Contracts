@@ -10,6 +10,10 @@ abstract contract KhronusNode {
         bytes data
         );
     
+    event RequestServed(
+        uint256 totalGas
+        );
+
     KhronusCoordinatorInterface private KhronusCoordinator;
     address owner;
 
@@ -18,8 +22,11 @@ abstract contract KhronusNode {
         owner = msg.sender;
     }
 
-    function fulfillAlert(bytes32 _alertID) external returns(bool){
-        return KhronusCoordinator.serveKhronAlert(_alertID);
+    function fulfillAlert(bytes32 _alertID) external {
+        uint _gasCost  = gasleft();
+        KhronusCoordinator.serveKhronAlert(_alertID);
+        _gasCost -= gasleft();
+        emit RequestServed(_gasCost);
     }
     
     function testing() external view returns (address){
