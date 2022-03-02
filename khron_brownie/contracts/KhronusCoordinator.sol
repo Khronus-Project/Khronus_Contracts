@@ -30,6 +30,8 @@ contract KhronusCoordinator is Ownable{
     event BandOfToleranceUpdated(uint newValue, uint timestamp); // When band of tolerance is updated
     event ProtocolGasConstantUpdated(uint newValue, uint timestamp); //When the protocol gas constant is updated
     event OperatorMarkupPCUpdated(uint newValue, uint timestamp); //When the operator is percentage is updated
+    event ClientFundsWithdrawn (address indexed clientContract, uint indexed timestamp, uint amount);
+    event BalanceWithdrawn (address indexed khronUser, uint indexed timestamp, uint amount );
 
     // Client
     event ClientFunded(address indexed client, address indexed requester, uint256 amount); //When a client contract is funded
@@ -127,8 +129,9 @@ contract KhronusCoordinator is Ownable{
         khronOracle = KhronPriceOracleInterface(_khronOracle);
         registrationDeposit = _registrationDeposit;
         bandOfTolerance = 1 minutes * _bandOfTolerance;
-        protocolGasConstant = 75726; //current platform standard gas execution
+        protocolGasConstant = 75704; //current platform standard gas execution
         operatorMarkupPC = 10;
+        minimumKhronClientBalance = 3e18;
     }
 
     // Business Logic Function Section
@@ -209,7 +212,7 @@ contract KhronusCoordinator is Ownable{
     function requestKhronTab(uint256 _timestamp, uint256 _iterations, string memory _khronTab) external returns(bytes32){
         address _requester = msg.sender;
         require (_isValidKhronTimestamp(_timestamp), "timestamp granularity should be on integer minutes your timestamp was not generated through the standard functionality on client contract or you overrode the function");
-        require (khronBalances[_requester] >= minimumKhronClientBalance);
+        require (khronBalances[_requester] >= minimumKhronClientBalance, "Client contract balance below minimum balance");
         bytes32 _requestID = keccak256(abi.encodePacked(_requester, clientRegistry[_requester].nonce));
         clientRegistry[_requester].nonce += 1;
         requestRegistry[_requestID].iterations = _iterations;
@@ -298,6 +301,7 @@ contract KhronusCoordinator is Ownable{
         require(!alertRegistry[_alertID].servedBy[_servingNode],"Alert was already served by this node");
         address _operator = nodeRegistry[_servingNode].owner;
         address _clientContract = requestRegistry[alertRegistry[_alertID].requestID].clientContract;
+        require (khronBalances[_clientContract] >= minimumKhronClientBalance);
         if (_isAlertCorrect(_alertID)) {
             nodeRegistry[_servingNode].requestsFulfilled += 1;      
             khronBalances[_operator]  == 0? gasAdjuster = 15000: gasAdjuster = 0;
@@ -342,6 +346,24 @@ contract KhronusCoordinator is Ownable{
     }
 
     //set khronCalendars
+
+    //Withdrawals
+
+    function withdrawFromContract (address _clientContract, uint _amount) external {
+        require(clientRegistry[_clientContract].owner == msg.sender, "Only client contract owner can call");
+        require(khronBalances[_clientContract] >= _amount, "amount to withdraw exceeds balance");
+        khronBalances[_clientContract] -= _amount;
+        khronBalances[msg.sender] += _amount;
+        emit ClientFundsWithdrawn(_clientContract, block.timestamp, _amount);
+    }
+    
+    function withdrawBalance () external {
+        uint _amount = khronBalances[msg.sender];
+        khronBalances[msg.sender] = 0;
+        khronus.transfer(msg.sender, _amount);
+        emit BalanceWithdrawn(msg.sender, block.timestamp, _amount);
+    }
+
 
     //View functions
     
