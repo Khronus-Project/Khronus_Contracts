@@ -43,12 +43,6 @@ def test_alert_operation_happyPath(constants, current_utc_timestamp):
     khron_balance_client = coordinator_contract.getKhronBalanceOf(client_contract.address) 
     # Set Test
     sleep(minutes_to_clearance*60)
-<<<<<<< HEAD
-    txt_serve_alert = nodeContract_0.fulfillAlert(alert_ID, {'from':mock_node, "gas_price":"1 gwei"})
-    #Test Log
-    data = {'Test':'KhronAlertOperations','TestTime':datetime.utcnow().ctime(), 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Client":client_contract.address, "Nodes":[nodeContract_0.address, nodeContract_1.address]}, "transaction":txt_serve_alert,"Events":txt_serve_alert.events}
-    logger(data)
-=======
     # Primary Alert
     txt_serve_alert_0 = nodeContract_0.fulfillAlert(alert_ID, {'from':mock_node_0, "gas_price":"1 gwei"})
     events_of_interest_0 = txt_serve_alert_0.events["AlertCompensated"]
@@ -72,7 +66,6 @@ def test_alert_operation_happyPath(constants, current_utc_timestamp):
     logger(testing_data)
     logger(data_0)
     logger(data_1)
->>>>>>> f61994e515659c5b391a33d6f2c1727911541055
     # Assertion
     assert coordinator_contract.getKhronBalanceOf(client_contract.address) == khron_balance_client - (compensation_khron_0 + compensation_khron_1)
     assert escrow_beneficiary.balance() == eth_balance_beneficiary + escrow_amount
