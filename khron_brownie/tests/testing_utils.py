@@ -1,5 +1,7 @@
+from brownie import accounts, KhronusCoordinator, KhronusCoordinatorImplementation, EscrowInfrastructure, KhronToken, TestKhronusNode, MockOracle, KhronPriceOracle
+from scripts import set_khron_env_upg_local
+import json
 
-from brownie import accounts, KhronusCoordinator, EscrowInfrastructure, KhronToken, TestKhronusNode, MockOracle, KhronPriceOracle
 # Testing utilities
 
 def khron_constants_client():
@@ -80,6 +82,37 @@ def khron_contants_operations():
                             "Registration_Deposit":registration_deposit
                             }
     return (operations_constants)
+
+
+def khron_contants_operations_proxied():
+    with open ('../contract_library/contract_addresses_proxied_local.json') as f:
+        addresses = json.load(f)
+    total_client_tokens = 100*10**18
+    registration_deposit = 5*10**18
+    khron_owner = accounts[0]
+    client_owner = accounts[1]
+    node_owner_0 = accounts[4]
+    node_owner_1 = accounts[5]
+    token_contract = KhronToken.at(addresses["KhronToken"])
+    coordinator_contract = KhronusCoordinatorImplementation.at(addresses["KhronusCoordinator"])
+    khron_oracle = KhronPriceOracle.at(addresses["KhronusOracle"])
+    client_contract = EscrowInfrastructure.at(addresses["KhronusClient"])
+    node_contract_0 = TestKhronusNode.at(addresses["KhronusNode_0"])
+    node_contract_1 = TestKhronusNode.at(addresses["KhronusNode_1"])
+    operations_constants = {"Token_Contract":token_contract,
+                            "Coordinator_Contract":coordinator_contract, 
+                            "Client_Contract":client_contract,
+                            "Node_Contracts":[node_contract_0, node_contract_1],
+                            "Khron_Owner":khron_owner,
+                            "Client_Owner":client_owner,
+                            "Node_Operators":[node_owner_0,node_owner_1],
+                            "Khron_Oracle":khron_oracle,
+                            "Registration_Deposit":registration_deposit
+                            }
+    return (operations_constants)
+
+def set_env_upgradeable():
+    set_khron_env_upg_local.main()
 
 def logger(data):
     buffer = str(data)

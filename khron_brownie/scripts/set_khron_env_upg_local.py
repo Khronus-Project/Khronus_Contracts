@@ -30,7 +30,7 @@ def main():
     web3.eth.send_transaction({"to":coordinator_contract.address,"from":node_owner_0.address,"data":call_register_node_0})
     web3.eth.send_transaction({"to":coordinator_contract.address,"from":node_owner_1.address,"data":call_register_node_1})
     # Record environment
-    contracts = {"KhronToken": token_contract.address, "KhronusClient": client_contract.address, "KhronusBenchmark": benchmark_contract.address,"KhronusCoordinator":coordinator_contract.address, "KhronusNode_0": node_contract_0.address, "KhronusNode_1": node_contract_1.address}
+    contracts = {"KhronToken": token_contract.address, "KhronusClient": client_contract.address, "KhronusBenchmark": benchmark_contract.address,"KhronusCoordinator":coordinator_contract.address,"KhronusOracle":constants["Khron_Oracle"].address, "KhronusNode_0": node_contract_0.address, "KhronusNode_1": node_contract_1.address}
     print(coordinator_contract.address)
     with open ('../contract_library/contract_addresses_proxied_local.json','w') as f:
        json.dump(contracts, f)

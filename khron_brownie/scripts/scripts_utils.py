@@ -14,7 +14,7 @@ class Served_Alert_Tx:
 def khron_constants_client():
     # Constants
     total_client_tokens = 1000*10**18
-    registration_deposit = 100*10**18
+    registration_deposit = 5*10**18
     tolerance_band = 5
     khron_owner = accounts[0]
     client_owner = accounts[1]
@@ -36,7 +36,7 @@ def khron_constants_client():
 def khron_constants_proxy_setup():
     # Constants
     total_client_tokens = 1000*10**18
-    registration_deposit = 100*10**18
+    registration_deposit = 5*10**18
     tolerance_band = 5
     khron_owner = accounts[0]
     client_owner = accounts[1]
@@ -54,6 +54,7 @@ def khron_constants_proxy_setup():
     client_constants = {"Token_Contract":token_contract,
                         "Coordinator_Implementation":coordinator_implementation, 
                         "Coordinator_Contract": coordinator_contract,
+                        "Khron_Oracle":khron_oracle,
                         "Client_Contract":client_contract,
                         "Khron_Owner":khron_owner,
                         "Client_Owner":client_owner,
