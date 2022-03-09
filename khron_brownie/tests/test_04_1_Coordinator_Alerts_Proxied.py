@@ -1,12 +1,12 @@
 import pytest
 from datetime import datetime, timezone
 from brownie import accounts
-from testing_utils import logger, khron_contants_operations_proxied, set_env_upgradeable
+from testing_utils import logger, khron_contants_operations_proxied_01
 from time import sleep
 
 @pytest.fixture
 def constants():
-    return khron_contants_operations_proxied()
+    return khron_contants_operations_proxied_01()
 
 @pytest.fixture
 def current_utc_timestamp():
@@ -188,7 +188,7 @@ def test_operator_withdrawal_happyPath(constants, current_utc_timestamp):
     coordinator_contract.withdrawBalance({"from":operators[1]})
     data_1 = {"transaction_gas":txt_serve_alert_1.gas_used, "gas_fee":consumed_gas_fee_1,"expected_eth":expected_eth_1, "compensation_khron":compensation_khron_1, "expected_khron":expected_khron_1, "difference_khron":difference_khron_1, "band_of_tolerance":khron_band_of_tolerance, "Events":events_of_interest_1}
     #Test Log
-    logger("Testing Happy Path")
+    logger("Testing Withdrawal Happy Path")
     logger(testing_data)
     logger(data_0)
     logger(data_1)
