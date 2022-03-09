@@ -3,11 +3,11 @@ pragma solidity ^0.8.0;
 
 import "../interfaces/KhronTokenInterface.sol";
 import "../interfaces/KhronusClientInterface.sol";
-import "../interfaces/KhronPriceOracleInterface.sol";
-import "OpenZeppelin/openzeppelin-contracts@4.5.0/contracts/access/Ownable.sol";
+import "../interfaces/KhronPriceOracleInterface.sol"; 
+import "OpenZeppelin/openzeppelin-contracts-upgradeable@4.5.0/contracts/access/OwnableUpgradeable.sol";
 import "@khronus/time-cog@1.0.2/contracts/src/KhronusTimeCog.sol";
 
-contract KhronusCoordinator is Ownable{
+contract KhronusCoordinatorImplementation is Initializable, OwnableUpgradeable{
     
     //interface declaration
 
@@ -50,9 +50,8 @@ contract KhronusCoordinator is Ownable{
     
     
     // Flag variables
-
     //This is not used but it is a design consideration
-    enum TypeOfRequest{
+    enum TypeOfRequest{ 
         khronTab,
         powerKhron
     }
@@ -73,7 +72,7 @@ contract KhronusCoordinator is Ownable{
     uint256 operatorMarkupPC; //operator markup
 
     
-    // client registry
+    // client registry 
     struct clientContract {
         address owner;
         uint256 nonce;
@@ -124,12 +123,13 @@ contract KhronusCoordinator is Ownable{
     mapping (bytes32 => khronAlert) alertRegistry;
 
     // contract contructor
-    constructor (address _khronAddress, address _khronOracle, uint256 _registrationDeposit, uint256 _bandOfTolerance) {
+    function initializeImplementation (address _khronAddress, address _khronOracle, uint256 _registrationDeposit, uint256 _bandOfTolerance) initializer external {
+        __Ownable_init();
         khronus = KhronTokenInterface(_khronAddress);
         khronOracle = KhronPriceOracleInterface(_khronOracle);
         registrationDeposit = _registrationDeposit;
         bandOfTolerance = 1 minutes * _bandOfTolerance;
-        protocolGasConstant = 75704; //current platform standard gas execution
+        protocolGasConstant = 78523; //current platform standard gas execution
         operatorMarkupPC = 10;
         minimumKhronClientBalance = 3e18;
     }
