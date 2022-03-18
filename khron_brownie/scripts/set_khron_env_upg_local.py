@@ -16,6 +16,8 @@ def main():
     registration_deposit = constants["Registration_Deposit"]
     node_owner_0 = accounts[4]
     node_owner_1 = accounts[5]
+    mock_node_0 = accounts[0]
+    mock_node_1 = accounts[9]
     # Set environment 
     token_contract.increaseApproval(coordinator_contract.address, registration_deposit, {'from':client_owner})
     call_register_client_0 = coordinator_implementation.registerClient.encode_input(client_contract.address, registration_deposit)
@@ -25,6 +27,8 @@ def main():
     web3.eth.send_transaction({"to":coordinator_contract.address,"from":client_owner.address,"data":call_register_client_1})
     node_contract_0 = TestKhronusNode.deploy(coordinator_contract.address,{'from':node_owner_0})
     node_contract_1 = TestKhronusNode.deploy(coordinator_contract.address,{'from':node_owner_1})
+    node_contract_0.setKhronNode(mock_node_0.address,{'from':node_owner_0})
+    node_contract_1.setKhronNode(mock_node_1.address,{'from':node_owner_1})
     call_register_node_0 = coordinator_implementation.registerNode.encode_input(node_contract_0.address)
     call_register_node_1 = coordinator_implementation.registerNode.encode_input(node_contract_1.address)
     web3.eth.send_transaction({"to":coordinator_contract.address,"from":node_owner_0.address,"data":call_register_node_0})

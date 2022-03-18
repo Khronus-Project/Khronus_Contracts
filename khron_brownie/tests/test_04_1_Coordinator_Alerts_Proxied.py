@@ -22,8 +22,8 @@ def test_alert_operation_happyPath(constants, current_utc_timestamp):
     operators = constants["Node_Operators"]
     khron_oracle = constants["Khron_Oracle"]
     gas_tolerance = constants["Gas_Tolerance"]
-    mock_node_0 = accounts[9]
-    mock_node_1 = accounts[8]
+    mock_node_0 = constants["Khron_Nodes"][0]
+    mock_node_1 = constants["Khron_Nodes"][1]
     escrow_depositor = accounts[2]
     escrow_beneficiary = accounts[3]
     minutes_to_clearance = 1
