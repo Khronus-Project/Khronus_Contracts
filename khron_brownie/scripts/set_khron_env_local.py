@@ -15,7 +15,8 @@ def main():
     registration_deposit = constants["Registration_Deposit"]
     node_owner_0 = accounts[4]
     node_owner_1 = accounts[5]
-    
+    mock_node_0 = accounts[0]
+    mock_node_1 = accounts[9]
     # Set environment 
     token_contract.increaseApproval(coordinator_contract.address, registration_deposit, {'from':client_owner})
     coordinator_contract.registerClient(client_contract.address, registration_deposit, {'from':client_owner})
@@ -23,6 +24,8 @@ def main():
     coordinator_contract.registerClient(benchmark_contract.address, registration_deposit, {'from':client_owner})
     node_contract_0 = TestKhronusNode.deploy(coordinator_contract.address,{'from':node_owner_0})
     node_contract_1 = TestKhronusNode.deploy(coordinator_contract.address,{'from':node_owner_1})
+    node_contract_0.setKhronNode(mock_node_0.address,{'from':node_owner_0})
+    node_contract_1.setKhronNode(mock_node_1.address,{'from':node_owner_1})
     coordinator_contract.registerNode(node_contract_0.address,{'from':node_owner_0})
     coordinator_contract.registerNode(node_contract_1.address,{'from':node_owner_1})
     # Record environment

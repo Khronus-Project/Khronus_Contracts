@@ -137,7 +137,7 @@ contract KhronusCoordinator is Ownable{
         khronOracle = KhronPriceOracleInterface(_khronOracle);
         registrationDeposit = _registrationDeposit;
         bandOfTolerance = 1 minutes * _bandOfTolerance;
-        protocolGasConstant = 77807; //current platform standard gas execution
+        protocolGasConstant = 77213; //current platform standard gas execution
         operatorMarkupPC = 10;
         minimumKhronClientBalance = 3e18;
     }

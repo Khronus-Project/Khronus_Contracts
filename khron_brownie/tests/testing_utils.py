@@ -1,3 +1,4 @@
+from unittest import mock
 from brownie import (
     accounts,
     Contract,
@@ -68,6 +69,8 @@ def khron_contants_operations():
     client_owner = accounts[1]
     node_owner_0 = accounts[4]
     node_owner_1 = accounts[5]
+    mock_node_0 = accounts[9]
+    mock_node_1 = accounts[8]
     gas_tolerance_fixed = 15000
     gas_tolerance_variable = 12
     gas_tolerance_total = gas_tolerance_fixed +gas_tolerance_variable
@@ -79,6 +82,8 @@ def khron_contants_operations():
     client_contract = EscrowInfrastructure.deploy(coordinator_contract.address,{'from':client_owner})
     node_contract_0 = TestKhronusNode.deploy(coordinator_contract.address, {'from':node_owner_0})
     node_contract_1 = TestKhronusNode.deploy(coordinator_contract.address, {'from':node_owner_1})
+    node_contract_0.setKhronNode(mock_node_0.address,{'from':node_owner_0})
+    node_contract_1.setKhronNode(mock_node_1.address,{'from':node_owner_1})
     token_contract.transfer(client_owner.address, total_client_tokens,{'from':khron_owner})
     coordinator_contract.registerNode(node_contract_0.address,{'from':node_owner_0})
     coordinator_contract.registerNode(node_contract_1.address,{'from':node_owner_1})
@@ -91,6 +96,7 @@ def khron_contants_operations():
                             "Khron_Owner":khron_owner,
                             "Client_Owner":client_owner,
                             "Node_Operators":[node_owner_0,node_owner_1],
+                            "Khron_Nodes":[mock_node_0,mock_node_1],
                             "Khron_Oracle":khron_oracle,
                             "Registration_Deposit":registration_deposit,
                             "Gas_Tolerance":gas_tolerance_total
@@ -105,6 +111,8 @@ def khron_contants_operations_proxied():
     client_owner = accounts[1]
     node_owner_0 = accounts[4]
     node_owner_1 = accounts[5]
+    mock_node_0 = accounts[9]
+    mock_node_1 = accounts[8]
     gas_tolerance_fixed = 15000
     gas_tolerance_variable = 12
     gas_tolerance_total = gas_tolerance_fixed +gas_tolerance_variable
@@ -120,6 +128,8 @@ def khron_contants_operations_proxied():
     client_contract = EscrowInfrastructure.deploy(coordinator_contract.address,{'from':client_owner})
     node_contract_0 = TestKhronusNode.deploy(coordinator_contract.address, {'from':node_owner_0})
     node_contract_1 = TestKhronusNode.deploy(coordinator_contract.address, {'from':node_owner_1})
+    node_contract_0.setKhronNode(mock_node_0.address,{'from':node_owner_0})
+    node_contract_1.setKhronNode(mock_node_1.address,{'from':node_owner_1})
     token_contract.transfer(client_owner.address, total_client_tokens,{'from':khron_owner})
     coordinator_contract.registerNode(node_contract_0.address,{'from':node_owner_0})
     coordinator_contract.registerNode(node_contract_1.address,{'from':node_owner_1})
@@ -129,6 +139,7 @@ def khron_contants_operations_proxied():
                             "Coordinator_Contract":coordinator_contract, 
                             "Client_Contract":client_contract,
                             "Node_Contracts":[node_contract_0, node_contract_1],
+                            "Khron_Nodes":[mock_node_0,mock_node_1],
                             "Khron_Owner":khron_owner,
                             "Client_Owner":client_owner,
                             "Node_Operators":[node_owner_0,node_owner_1],
