@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/KhronTokenInterface.sol";
-import "../interfaces/KhronusClientInterface.sol";
 import "../interfaces/KhronPriceOracleInterface.sol"; 
+import "../interfaces/KhronusClientInterface.sol"; 
 import "OpenZeppelin/openzeppelin-contracts-upgradeable@4.5.0/contracts/access/OwnableUpgradeable.sol";
 import "@khronus/time-cog@1.0.2/contracts/src/KhronusTimeCog.sol";
 
@@ -41,7 +41,7 @@ contract KhronusCoordinatorImplementation is Initializable, OwnableUpgradeable{
     event NodeRegistered(address indexed node, bytes32 index, address owner); //When a Node is Registered
 
     // Requests and Alerts
-    event RequestProcessed(address indexed client, bytes32 requestID, bytes data); //When a request is processed, the event was dispatched to node contracts
+    event RequestProcessed(address indexed client, bytes32 requestID); //When a request is processed, the event was dispatched to node contracts
     event AlertDispatched(bytes32 indexed requestID,bytes32 alertID, address[2] assignedNode, uint256 gasCost); //When the alert is dispatched to each node contract
     event AlertFulfilled(bytes32 indexed requestID,  address indexed servingNode,bytes32 alertID, alertStatus status);  //When an alert was properly fulfilled
     event AlertMistaken(address indexed servingNode,bytes32 alertID, uint256 expectedTimestamp, uint256 actualTimestamp); //When an alert was dispatched off-time
@@ -129,7 +129,7 @@ contract KhronusCoordinatorImplementation is Initializable, OwnableUpgradeable{
         khronOracle = KhronPriceOracleInterface(_khronOracle);
         registrationDeposit = _registrationDeposit;
         bandOfTolerance = 1 minutes * _bandOfTolerance;
-        protocolGasConstant = 78523; //current platform standard gas execution
+        protocolGasConstant = 79012; //current platform standard gas execution
         operatorMarkupPC = 10;
         minimumKhronClientBalance = 3e18;
     }
@@ -209,15 +209,16 @@ contract KhronusCoordinatorImplementation is Initializable, OwnableUpgradeable{
     */
 
     //set khron request
-    function requestKhronTab(uint256 _timestamp, uint256 _iterations, string memory _khronTab) external returns(bytes32){
+    function requestKhronTab(uint256 _timestamp, uint256 _iterations, uint256 _step) external returns(bytes32){
         address _requester = msg.sender;
         require (_isValidKhronTimestamp(_timestamp), "timestamp granularity should be on integer minutes your timestamp was not generated through the standard functionality on client contract or you overrode the function");
+        require (_iterations > 0, "request should have at least one iteration" );
         require (khronBalances[_requester] >= minimumKhronClientBalance, "Client contract balance below minimum balance");
         bytes32 _requestID = keccak256(abi.encodePacked(_requester, clientRegistry[_requester].nonce));
         clientRegistry[_requester].nonce += 1;
         requestRegistry[_requestID].iterations = _iterations;
         requestRegistry[_requestID].clientContract = _requester;
-        if (_iterations <= 1){
+        if (_iterations == 1){
             uint256 _iteration = 1;
             bytes memory _iterationsOrder = abi.encodePacked(_iteration,_iterations);
             _setKhronAlert(_requestID, _iterationsOrder, _timestamp);
@@ -225,7 +226,7 @@ contract KhronusCoordinatorImplementation is Initializable, OwnableUpgradeable{
         else{
             //request calendar with the requestID
         }
-        emit RequestProcessed(_requester, _requestID,abi.encode(_timestamp, _iterations, _khronTab));
+        emit RequestProcessed(_requester, _requestID);
         return _requestID;
     }
 

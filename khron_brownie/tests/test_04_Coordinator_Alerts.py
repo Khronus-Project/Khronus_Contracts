@@ -21,8 +21,9 @@ def test_alert_operation_happyPath(constants, current_utc_timestamp):
     nodeContract_1 = constants["Node_Contracts"][1]
     operators = constants["Node_Operators"]
     khron_oracle = constants["Khron_Oracle"]
-    mock_node_0 = accounts[9]
-    mock_node_1 = accounts[8]
+    gas_tolerance = constants["Gas_Tolerance"]
+    mock_node_0 = constants["Khron_Nodes"][0]
+    mock_node_1 = constants["Khron_Nodes"][1]
     escrow_depositor = accounts[2]
     escrow_beneficiary = accounts[3]
     minutes_to_clearance = 1
@@ -32,7 +33,7 @@ def test_alert_operation_happyPath(constants, current_utc_timestamp):
     testing_data = {'Test':'KhronAlertOperations','TestTime':datetime.utcnow().ctime(), 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Client":client_contract.address, "Nodes":[nodeContract_0.address, nodeContract_1.address]}}
     # Set environment for testing
     khron_eth_price = khron_oracle.getLatestPriceKhronETH()
-    khron_band_of_tolerance = ((15000 *1.1) * 1000000000) / (khron_eth_price /1e18)
+    khron_band_of_tolerance = ((gas_tolerance *1.1) * 1000000000) / (khron_eth_price /1e18)
     eth_balance_beneficiary = escrow_beneficiary.balance()
     node_0_t0_ethbalance = mock_node_0.balance()
     node_1_t0_ethbalance = mock_node_1.balance()
@@ -81,6 +82,7 @@ def test_alert_operation_serve_twice_same_node(constants, current_utc_timestamp)
     nodeContract_1 = constants["Node_Contracts"][1]
     operators = constants["Node_Operators"]
     khron_oracle = constants["Khron_Oracle"]
+    gas_tolerance = constants["Gas_Tolerance"]
     mock_node_0 = accounts[9]
     mock_node_1 = accounts[8]
     escrow_depositor = accounts[2]
@@ -92,7 +94,7 @@ def test_alert_operation_serve_twice_same_node(constants, current_utc_timestamp)
     testing_data = {'Test':'KhronAlertOperations','TestTime':datetime.utcnow().ctime(), 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Client":client_contract.address, "Nodes":[nodeContract_0.address, nodeContract_1.address]}}
     # Set environment for testing
     khron_eth_price = khron_oracle.getLatestPriceKhronETH()
-    khron_band_of_tolerance = ((15000 *1.1) * 1000000000) / (khron_eth_price /1e18)
+    khron_band_of_tolerance = ((gas_tolerance *1.1) * 1000000000) / (khron_eth_price /1e18)
     eth_balance_beneficiary = escrow_beneficiary.balance()
     node_0_t0_ethbalance = mock_node_0.balance()
     node_1_t0_ethbalance = mock_node_1.balance()
@@ -145,6 +147,7 @@ def test_operator_withdrawal_happyPath(constants, current_utc_timestamp):
     nodeContract_1 = constants["Node_Contracts"][1]
     operators = constants["Node_Operators"]
     khron_oracle = constants["Khron_Oracle"]
+    gas_tolerance = constants["Gas_Tolerance"]
     mock_node_0 = accounts[9]
     mock_node_1 = accounts[8]
     escrow_depositor = accounts[2]
@@ -156,7 +159,7 @@ def test_operator_withdrawal_happyPath(constants, current_utc_timestamp):
     testing_data = {'Test':'KhronAlertOperations','TestTime':datetime.utcnow().ctime(), 'TestingAddresses':{"Token":token_contract.address, "Coordinator":coordinator_contract.address,"Client":client_contract.address, "Nodes":[nodeContract_0.address, nodeContract_1.address]}}
     # Set environment for testing
     khron_eth_price = khron_oracle.getLatestPriceKhronETH()
-    khron_band_of_tolerance = ((15000 *1.1) * 1000000000) / (khron_eth_price /1e18)
+    khron_band_of_tolerance = ((gas_tolerance *1.1) * 1000000000) / (khron_eth_price /1e18)
     eth_balance_beneficiary = escrow_beneficiary.balance()
     node_0_t0_ethbalance = mock_node_0.balance()
     node_1_t0_ethbalance = mock_node_1.balance()
@@ -188,7 +191,7 @@ def test_operator_withdrawal_happyPath(constants, current_utc_timestamp):
     coordinator_contract.withdrawBalance({"from":operators[1]})
     data_1 = {"transaction_gas":txt_serve_alert_1.gas_used, "gas_fee":consumed_gas_fee_1,"expected_eth":expected_eth_1, "compensation_khron":compensation_khron_1, "expected_khron":expected_khron_1, "difference_khron":difference_khron_1, "band_of_tolerance":khron_band_of_tolerance, "Events":events_of_interest_1}
     #Test Log
-    logger("Testing Happy Path")
+    logger("Testing Withdrawal Happy Path")
     logger(testing_data)
     logger(data_0)
     logger(data_1)

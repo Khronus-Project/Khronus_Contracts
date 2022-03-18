@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@khronus/khronus-client@0.0.4/contracts/KhronusClientBase.sol";
+//Local Import from package source
+//import "Khronus_Utils/contracts/KhronusClientBase.sol";
+
+//remote import from package
+import "@khronus/khronus-utils@0.0.2/contracts/KhronusClientBase.sol";
 
 contract EscrowInfrastructure is KhronusClient{
 
@@ -41,7 +45,7 @@ contract EscrowInfrastructure is KhronusClient{
         escrowRegistry[_escrowID].agent = _agent;
         escrowRegistry[_escrowID].condition = false;
         escrowRegistry[_escrowID].status = EscrowStatus.Open;
-        bytes32 _requestID = clientRequestKhronTab(_expiryTimestamp, 1, "");
+        bytes32 _requestID = clientRequestKhronTab(_expiryTimestamp, 1, 0);
         tabRegistry[_requestID] = _escrowID;
         nonce += 1;
         emit EscrowCreated(_depositor, _escrowID, _expiryTimestamp, _deposit);
