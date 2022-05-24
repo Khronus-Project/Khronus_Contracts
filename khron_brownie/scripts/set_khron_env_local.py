@@ -6,7 +6,6 @@ def main():
     constants = khron_constants_client()
     
     # Set up constants 
-    
     token_contract = constants["Token_Contract"]
     coordinator_contract = constants["Coordinator_Contract"]
     client_contract = constants["Client_Contract"]
