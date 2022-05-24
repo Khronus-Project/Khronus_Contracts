@@ -1,12 +1,16 @@
 import pytest
 from datetime import datetime, timezone
 from brownie import accounts
-from testing_utils import logger, khron_contants_operations
+from testing_utils import logger, khron_contants_operations, khron_contants_operations01
 from time import sleep
 
 @pytest.fixture
 def constants():
     return khron_contants_operations()
+
+@pytest.fixture
+def constants01():
+    return khron_contants_operations01()
 
 @pytest.fixture
 def current_utc_timestamp():
