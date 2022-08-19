@@ -1,4 +1,4 @@
-from brownie import accounts, KhronusCoordinator, KhronusCoordinatorImplementation, TransparentUpgradeableProxy, ProxyAdmin, EscrowInfrastructure, KhronToken, TestKhronusNode, MockOracle, KhronPriceOracle, web3
+from brownie import accounts, KhronusCoordinator, KhronusCoordinatorV01, KhronusCoordinatorImplementation, TransparentUpgradeableProxy, ProxyAdmin, EscrowInfrastructure, KhronToken, TestKhronusNode, TestKhronusNode01, MockOracle, KhronPriceOracle, web3
 # Testing utilities
 
 
@@ -93,3 +93,19 @@ def khron_contants_operations():
                             "Khron_Oracle":khron_oracle
                             }
     return (operations_constants)
+
+def khron_constants_clientV01():
+    # Constants
+    registration_deposit = 0.5*10**18
+    tolerance_band = 5
+    khron_owner = accounts[0]
+    client_owner = accounts[1]
+    coordinator_contract = KhronusCoordinatorV01.deploy(registration_deposit, tolerance_band,{'from':khron_owner})
+    client_contract = EscrowInfrastructure.deploy(coordinator_contract.address,{"from":client_owner})
+    client_constants = {"Coordinator_Contract":coordinator_contract, 
+                        "Client_Contract":client_contract,
+                        "Khron_Owner":khron_owner,
+                        "Client_Owner":client_owner,
+                        "Registration_Deposit":registration_deposit}
+    return (client_constants)
+    

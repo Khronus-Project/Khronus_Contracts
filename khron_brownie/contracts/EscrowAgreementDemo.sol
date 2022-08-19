@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 //import "Khronus_Utils/contracts/KhronusClientBase.sol";
 
 //remote import from package
-import "@khronus/khronus-utils@0.0.2/contracts/KhronusClientBase.sol";
+import "@khronus/khronus-utils@0.0.3/contracts/KhronusClientBase.sol";
 
 contract EscrowInfrastructure is KhronusClient{
 

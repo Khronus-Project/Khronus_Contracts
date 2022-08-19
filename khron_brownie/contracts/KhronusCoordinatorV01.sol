@@ -42,7 +42,7 @@ contract KhronusCoordinatorV01 is Ownable{
     event AlertFulfilled(bytes32 indexed requestID,  address indexed servingNode, bytes32 alertID, alertStatus status);  //When an alert was properly fulfilled
     event AlertMistaken(address indexed servingNode,bytes32 alertID, uint256 expectedTimestamp, uint256 actualTimestamp); //When an alert was dispatched off-time
     event AlertCompensated(bytes32 indexed alertID, address indexed client, address indexed operator, uint256 gasAccounted, uint256 gasPrice, uint gasCost, uint256 ethAccounted); //When an alert fulfillment is compensated
-    event WorkflowCompleted(uint gasCost, uint accountedGas, uint txGasPrice); //When workflow of fulfilling alerts is completed
+    event WorkflowCompleted(bytes32 indexed alertID, uint gasCost, uint accountedGas, uint txGasPrice); //When workflow of fulfilling alerts is completed
     
     
     // Flag variables
@@ -311,7 +311,7 @@ contract KhronusCoordinatorV01 is Ownable{
         }
         alertRegistry[_alertID].servedBy[_servingNode] = true;
         gasCost -= gasleft();
-        emit WorkflowCompleted(gasCost, _gasSpent, tx.gasprice);
+        emit WorkflowCompleted(_alertID, gasCost, _gasSpent, tx.gasprice);
         return true;
     }
 

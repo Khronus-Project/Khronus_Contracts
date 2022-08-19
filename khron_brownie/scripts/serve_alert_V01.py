@@ -1,4 +1,4 @@
-from brownie import accounts, KhronusCoordinator, EscrowInfrastructure, TestKhronusNode, KhronToken
+from brownie import accounts, KhronusCoordinatorV01, EscrowInfrastructure, TestKhronusNode01
 import json
 from time import sleep
 from datetime import datetime, timezone
@@ -18,9 +18,9 @@ def main():
     timestamp = current_closest_minute() + 60
     with open ('../contract_library/contract_addresses_local.json') as f:
         addresses = json.load(f)
-    coordinator_contract = KhronusCoordinator.at(addresses["KhronusCoordinator"])
+    coordinator_contract = KhronusCoordinatorV01.at(addresses["KhronusCoordinator"])
     client_contract = EscrowInfrastructure.at(addresses["KhronusClient"])
-    node_contract = TestKhronusNode.at(addresses["KhronusNode_0"])
+    node_contract = TestKhronusNode01.at(addresses["KhronusNode_0"])
     txt_request = client_contract.openEscrow(escrow_beneficiary, timestamp, agent, {"from":escrow_depositor, "value":"1 ether"})
     alert_ID = txt_request.events['AlertDispatched']['alertID']
     test_request = coordinator_contract.getAlertRequest(alert_ID)

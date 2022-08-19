@@ -6,7 +6,6 @@ def main():
     constants = khron_constants_proxy_setup()
     
     # Set up constants 
-    
     token_contract = constants["Token_Contract"]
     coordinator_implementation = constants["Coordinator_Implementation"]
     coordinator_contract = constants["Coordinator_Contract"]
@@ -38,3 +37,6 @@ def main():
     print(coordinator_contract.address)
     with open ('../contract_library/contract_addresses_proxied_local.json','w') as f:
        json.dump(contracts, f)
+
+def test ():
+    return
