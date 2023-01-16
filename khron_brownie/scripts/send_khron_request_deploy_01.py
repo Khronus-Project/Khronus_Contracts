@@ -11,7 +11,7 @@ def main():
     escrowBeneficiary = "0xb04195e45174D5a55e660C0D1127f182EFdb8cD9"
     agent = "0xb04195e45174D5a55e660C0D1127f182EFdb8cD9"
     timestamp = current_utc_timestamp()+120
-    with open ('../contract_library/contract_addresses_deployment.json') as f:
+    with open ('../contract_library/contract_addresses_deployment_mumbai.json') as f:
         addresses = json.load(f)
     clientContract = EscrowInfrastructure.at(addresses["KhronusClient"])
     txt = clientContract.openEscrow(escrowBeneficiary, timestamp, agent, {'from':escrowDepositor,'value':"0.005 ether"})
