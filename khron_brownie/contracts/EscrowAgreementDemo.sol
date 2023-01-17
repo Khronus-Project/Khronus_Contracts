@@ -61,14 +61,14 @@ contract EscrowInfrastructure is KhronusClient{
     function khronProcessAlert(bytes32 _requestID) override internal returns (bool){
         bytes32 _escrowID = tabRegistry[_requestID];
         if (escrowRegistry[_escrowID].condition){
-            payable(escrowRegistry[_escrowID].beneficiary).transfer(escrowRegistry[_escrowID].balance);
             escrowRegistry[_escrowID].balance = 0;
             escrowRegistry[_escrowID].status = EscrowStatus.Expired;
+            payable(escrowRegistry[_escrowID].beneficiary).transfer(escrowRegistry[_escrowID].balance);
         }
         else{
-            payable(escrowRegistry[_escrowID].depositor).transfer(escrowRegistry[_escrowID].balance);
             escrowRegistry[_escrowID].balance = 0;
             escrowRegistry[_escrowID].status = EscrowStatus.Expired;
+            payable(escrowRegistry[_escrowID].depositor).transfer(escrowRegistry[_escrowID].balance);
         }
         emit EscrowExpired(_escrowID, block.timestamp, escrowRegistry[_escrowID].condition);
         return true;

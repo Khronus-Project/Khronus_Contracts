@@ -1,8 +1,8 @@
-from brownie import accounts, KhronusCoordinator, EscrowInfrastructure, BasicClient, TestKhronusNode, KhronToken
-import json
+from brownie import accounts, KhronusCoordinatorV01, EscrowInfrastructure, BasicClient, TestKhronusNode01
 from time import sleep
 from datetime import datetime, timezone
 from scripts.scripts_utils import Served_Alert_Tx;
+import json
 
 def current_closest_minute():
     current_timestamp = int(datetime.now(timezone.utc).timestamp())
@@ -20,12 +20,11 @@ def main():
     timestamp = current_closest_minute() + 60
     with open ('../contract_library/contract_addresses_local.json') as f:
         addresses = json.load(f)
-    token_contract = KhronToken.at(addresses["KhronToken"])
-    coordinator_contract = KhronusCoordinator.at(addresses["KhronusCoordinator"])
+    coordinator_contract = KhronusCoordinatorV01.at(addresses["KhronusCoordinator"])
     client_contract = EscrowInfrastructure.at(addresses["KhronusClient"])
     benchmark_contract = BasicClient.at(addresses["KhronusBenchmark"])
-    node_contract_0 = TestKhronusNode.at(addresses["KhronusNode_0"])
-    node_contract_1 = TestKhronusNode.at(addresses["KhronusNode_1"])
+    node_contract_0 = TestKhronusNode01.at(addresses["KhronusNode_0"])
+    node_contract_1 = TestKhronusNode01.at(addresses["KhronusNode_1"])
     txt_request_client_1 = client_contract.openEscrow(escrow_beneficiary, timestamp, agent, {"from":escrow_depositor, "value":"1 ether"})
     txt_request_benchmark_1 = benchmark_contract.setTab(timestamp,{"from":escrow_depositor})
     alert_ID_client_1 = txt_request_client_1.events['AlertDispatched']['alertID']
@@ -64,7 +63,7 @@ def main():
     except Exception as e:
         print(e)
     result = {"First_Serving":[vars(served_alert_client_1),vars(re_served_alert_client_1),vars(served_alert_benchmark_1),vars(re_served_alert_benchmark_1)],"Second_Serving":[vars(served_alert_client_2),vars(re_served_alert_client_2),vars(served_alert_benchmark_2),vars(re_served_alert_benchmark_2)]}
-    with open ('../References/gas_measures.json','w') as f:
+    with open ('./references/gas_measures.json','w+') as f:
         json.dump(result, f)
     print(f"test balance = {test_balance, test_balance_01, re_serve_alert_client_2.gas_price} actual balance = {re_serve_alert_client_2.gas_used}")
     print(f"Trace of new protocol first served, total gas {serve_alert_client_1.gas_used} ")

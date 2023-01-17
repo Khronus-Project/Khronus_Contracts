@@ -37,12 +37,13 @@ contract KhronusCoordinatorV01 is Ownable{
     event NodeRegistered(address indexed node, bytes32 index, address owner); //When a Node is Registered
 
     // Requests and Alerts
-    event RequestProcessed(address indexed client, bytes32 requestID); //When a request is processed, the event was dispatched to node contracts
-    event AlertDispatched(bytes32 indexed requestID,bytes32 alertID, address[2] assignedNode, uint256 gasCost); //When the alert is dispatched to each node contract
+    event RequestProcessed(address indexed client, bytes32 requestID, uint256 gasCost); //When a request is processed, the event was dispatched to node contracts
+    event AlertDispatched(bytes32 indexed requestID,bytes32 alertID, address[2] assignedNode); //When the alert is dispatched to each node contract
     event AlertFulfilled(bytes32 indexed requestID,  address indexed servingNode, bytes32 alertID, alertStatus status);  //When an alert was properly fulfilled
     event AlertMistaken(address indexed servingNode,bytes32 alertID, uint256 expectedTimestamp, uint256 actualTimestamp); //When an alert was dispatched off-time
-    event AlertCompensated(bytes32 indexed alertID, address indexed client, address indexed operator, uint256 gasAccounted, uint256 gasPrice, uint gasCost, uint256 ethAccounted); //When an alert fulfillment is compensated
     event WorkflowCompleted(bytes32 indexed alertID, uint gasCost, uint accountedGas, uint txGasPrice); //When workflow of fulfilling alerts is completed
+    event AlertCompensated(bytes32 indexed alertID, address indexed client, address indexed operator, uint256 gasAccounted, uint256 gasPrice, uint gasCost, uint256 dueComp); //When an alert fulfillment is compensated
+    
     
     
     // Flag variables
@@ -130,7 +131,7 @@ contract KhronusCoordinatorV01 is Ownable{
     constructor (uint256 _registrationDeposit, uint256 _bandOfTolerance) {
         registrationDeposit = _registrationDeposit; 
         bandOfTolerance = 1 minutes * _bandOfTolerance;
-        protocolGasConstant = 66114; //current platform standard gas execution
+        protocolGasConstant = 66114 + 432; //current platform standard gas execution
         operatorMarkupPC = 10;
         minimumClientBalance = 0.3*1e18; 
     }
@@ -206,23 +207,21 @@ contract KhronusCoordinatorV01 is Ownable{
 
     //set khron request
     function requestKhronTab(uint256 _timestamp, uint256 _iterations, uint256 _step) external returns(bytes32){
+        uint _gasCost = gasleft(); //For measuring gas
         address _requester = msg.sender;
-        require (_isValidKhronTimestamp(_timestamp), "timestamp granularity should be on integer minutes your timestamp was not generated through the standard functionality on client contract or you overrode the function");
-        require (_iterations > 0, "request should have at least one iteration" );
+        require (_isValidKhronTimestamp(_timestamp), "timestamp granularity should be on integer minutes, your timestamp was not generated through the standard functionality on client contract or you overrode the function");
+        require (_iterations == 1, "request should have one iteration on beta" );
+        require (_step == 0, "step defaults to 0 on beta" );
         require (userBalances[_requester] >= minimumClientBalance, "Client contract balance below minimum balance"); 
         bytes32 _requestID = keccak256(abi.encodePacked(_requester, clientRegistry[_requester].nonce));
         clientRegistry[_requester].nonce += 1;
         requestRegistry[_requestID].iterations = _iterations;
         requestRegistry[_requestID].clientContract = _requester;
-        if (_iterations == 1){
-            uint256 _iteration = 1;
-            bytes memory _iterationsOrder = abi.encodePacked(_iteration,_iterations);
-            _setKhronAlert(_requester,_requestID, _iterationsOrder, _timestamp);
-        }
-        else{
-            //request calendar with the requestID
-        }
-        emit RequestProcessed(_requester, _requestID);
+        uint256 _iteration = 1;
+        bytes memory _iterationsOrder = abi.encodePacked(_iteration,_iterations); //Iterations order is a reference to manage multiple alerts in the same request currently not in use
+        _setKhronAlert(_requester,_requestID, _iterationsOrder, _timestamp);
+        _gasCost -= gasleft(); // added just to evalute current gas cost of setting alerts
+        emit RequestProcessed(_requester, _requestID, _gasCost);
         return _requestID;
     }
 
@@ -272,11 +271,10 @@ contract KhronusCoordinatorV01 is Ownable{
     
     //set khronAlerts
     function _setKhronAlert(address _requester, bytes32 _requestID, bytes memory _alertOrder, uint256 _timestamp) private {
-        uint _gasCost = gasleft(); // added just to evalute current gas cost of setting alerts
         bytes32 _alertID = keccak256(abi.encodePacked(_requestID, _alertOrder, _timestamp));
         alertRegistry[_alertID].requestID = _requestID;
         alertRegistry[_alertID].timestamp = _timestamp;
-        string memory _eventTaskCode = '102'; //hardcoded CRUD event code 1 of task 02
+        string memory _eventTaskCode = '102'; //hardcoded CRUD event code 1 Create, 02 Alert
         bytes memory _data = abi.encodePacked(_requestID, _alertID, _timestamp, _alertOrder, _eventTaskCode);
         for (uint256 _servingNodeI = 0; _servingNodeI < 2; _servingNodeI ++){
             address _servingNode = _getServingNode();
@@ -284,8 +282,7 @@ contract KhronusCoordinatorV01 is Ownable{
             nodeRegistry[_servingNode].requestsReceived += 1;
             _dispatchToNodes(_requester, _servingNode, _data);
         }
-        _gasCost -= gasleft(); // added just to evalute current gas cost of setting alerts
-        emit AlertDispatched(_requestID, _alertID, alertRegistry[_alertID].servingNodes, _gasCost);
+        emit AlertDispatched(_requestID, _alertID, alertRegistry[_alertID].servingNodes);
     }
     
     //serve khronAlerts 
@@ -299,6 +296,7 @@ contract KhronusCoordinatorV01 is Ownable{
         address _operator = nodeRegistry[_servingNode].owner;
         address _clientContract = requestRegistry[alertRegistry[_alertID].requestID].clientContract;
         require (userBalances[_clientContract] >= minimumClientBalance); 
+        alertRegistry[_alertID].servedBy[_servingNode] = true;
         if (_isAlertCorrect(_alertID)) {
             nodeRegistry[_servingNode].requestsFulfilled += 1;      
             userBalances[_operator]  == 0? gasAdjuster = 15000: gasAdjuster = 0;
@@ -309,7 +307,6 @@ contract KhronusCoordinatorV01 is Ownable{
            nodeRegistry[_servingNode].requestsFailed += 1;
            emit AlertMistaken(_servingNode, _alertID, alertRegistry[_alertID].timestamp, block.timestamp);
         }
-        alertRegistry[_alertID].servedBy[_servingNode] = true;
         gasCost -= gasleft();
         emit WorkflowCompleted(_alertID, gasCost, _gasSpent, tx.gasprice);
         return true;
@@ -332,18 +329,18 @@ contract KhronusCoordinatorV01 is Ownable{
     }
 
     function calculateCompensation(uint256 _gasAccounted) private returns (uint256, uint256){
-        uint256 _gasComp = _gasAccounted * tx.gasprice; 
-        uint256 _operatorFee = (_gasComp * operatorMarkupPC) / 100; 
-        uint256 _dueEther = _gasComp + _operatorFee; 
-        return (_gasComp, _dueEther); 
+        uint256 _gasCompNtv = _gasAccounted * tx.gasprice; 
+        uint256 _operatorFee = (_gasCompNtv * operatorMarkupPC) / 100; 
+        uint256 _dueNtv = _gasCompNtv+ _operatorFee; 
+        return (_gasCompNtv, _dueNtv); 
     }
     
     function compensateAlert(bytes32 _alertID, address _clientContract, address _operator, uint _gasAccounted) private {
-        (uint256 _gasComp, uint256 _dueEther) = calculateCompensation(_gasAccounted); 
-        require (_dueEther <= userBalances[_clientContract], "Client contract balance is not enough to pay for alert"); 
-        userBalances[_clientContract] -= _dueEther;
-        userBalances[_operator] += _dueEther; // TOKEN RELATED
-        emit AlertCompensated(_alertID, _clientContract, _operator, _gasAccounted, tx.gasprice, _gasComp, _dueEther);
+        (uint256 _gasCompNtv, uint256 _dueNtv) = calculateCompensation(_gasAccounted); 
+        require (_dueNtv <= userBalances[_clientContract], "Client contract balance is not enough to pay for alert"); 
+        userBalances[_clientContract] -= _dueNtv;
+        userBalances[_operator] += _dueNtv; // TOKEN RELATED
+        emit AlertCompensated(_alertID, _clientContract, _operator, _gasAccounted, tx.gasprice, _gasCompNtv, _dueNtv);
     }
 
     //set khronCalendars
