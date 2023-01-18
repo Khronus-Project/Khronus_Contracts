@@ -5,23 +5,24 @@ from testing_utils import logger, khron_contants_operations01
 from time import sleep
 
 @pytest.fixture
-def constants():
+def constants01():
     return khron_contants_operations01()
 
 @pytest.fixture
 def current_utc_timestamp():
     return int(datetime.now(timezone.utc).timestamp())
 
-def test_alert_operation_happyPath01(constants, current_utc_timestamp): 
+def test_alert_operation_happyPath01(constants01, current_utc_timestamp): 
     # Set up constants for testing
-    coordinator_contract = constants["Coordinator_Contract"]
-    client_contract = constants["Client_Contract"]
-    nodeContract_0 = constants["Node_Contracts"][0]
-    nodeContract_1 = constants["Node_Contracts"][1]
-    operators = constants["Node_Operators"]
-    gas_tolerance = constants["Gas_Tolerance"]
-    mock_node_0 = constants["Khron_Nodes"][0]
-    mock_node_1 = constants["Khron_Nodes"][1]
+    coordinator_contract = constants01["Coordinator_Contract"]
+    client_contract = constants01["Client_Contract"]
+    nodeContract_0 = constants01["Node_Contracts"][0]
+    nodeContract_1 = constants01["Node_Contracts"][1]
+    operators = constants01["Node_Operators"]
+    gas_tolerance = constants01["Gas_Tolerance"]
+    mock_node_0 = constants01["Khron_Nodes"][0]
+    mock_node_1 = constants01["Khron_Nodes"][1]
+    operator_reward_multiplier = 1.1 #10% over gas estimated
     escrow_depositor = accounts[2]
     escrow_beneficiary = accounts[3]
     minutes_to_clearance = 1
@@ -30,7 +31,7 @@ def test_alert_operation_happyPath01(constants, current_utc_timestamp):
     agent = accounts[0]
     testing_data = {'Test':'KhronAlertOperations No Token','TestTime':datetime.utcnow().ctime(), 'TestingAddresses':{"Coordinator":coordinator_contract.address,"Client":client_contract.address, "Nodes":[nodeContract_0.address, nodeContract_1.address]}}
     # Set environment for testing
-    eth_band_of_tolerance = ((gas_tolerance *1.1) * 1000000000) 
+    eth_band_of_tolerance = ((gas_tolerance * operator_reward_multiplier) * 1000000000) 
     eth_balance_beneficiary = escrow_beneficiary.balance()
     node_0_t0_ethbalance = mock_node_0.balance()
     node_1_t0_ethbalance = mock_node_1.balance()
@@ -65,3 +66,4 @@ def test_alert_operation_happyPath01(constants, current_utc_timestamp):
     assert escrow_beneficiary.balance() == eth_balance_beneficiary + escrow_amount
     assert compensation_0 <= expected_eth_0 + eth_band_of_tolerance and  compensation_0 >= expected_eth_0  
     assert compensation_1 <= expected_eth_1 + eth_band_of_tolerance and  compensation_1 >= expected_eth_1 
+
