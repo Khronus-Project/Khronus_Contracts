@@ -1,24 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "../interfaces/KhronusNodeInterface.sol";
+import "../interfaces/KhronusClientInterface.sol";
 import "OpenZeppelin/openzeppelin-contracts@4.5.0/contracts/access/Ownable.sol";
 import "@khronus/time-cog@1.0.2/contracts/src/KhronusTimeCog.sol";
 
-
-interface KhronusNodeInterface {
-    function broadcast(address requester, bytes memory _data) external;
-}
-
-interface KhronusClientInterface {
-   
-    // Interface Functions
-    // Only owner and internal functions are not provided
-    function khronResponse(bytes32 _requestID) external returns (bool);
-
-}
-
 contract KhronusCoordinatorV01 is Ownable{
-
+    
     //interface declaration
 
     KhronusClientInterface private khronusClient;
@@ -281,25 +270,28 @@ contract KhronusCoordinatorV01 is Ownable{
     }
     
     //set khronAlerts
+    //set khronAlerts
     function _setKhronAlert(address _requester, bytes32 _requestID, bytes memory _alertOrder, uint256 _timestamp) private {
         bytes32 _alertID = keccak256(abi.encodePacked(_requestID, _alertOrder, _timestamp));
         alertRegistry[_alertID].requestID = _requestID;
         alertRegistry[_alertID].timestamp = _timestamp;
         string memory _eventTaskCode = '102'; //hardcoded CRUD event code 1 Create, 02 Alert
         bytes memory _data = abi.encodePacked(_requestID, _alertID, _timestamp, _alertOrder, _eventTaskCode);
-        for (uint256 _servingNodeI = 0; _servingNodeI < 2; _servingNodeI ++){
-            address _servingNode = _getServingNode();
-            alertRegistry[_alertID].servingNodes[_servingNodeI] = _servingNode;
-            nodeRegistry[_servingNode].requestsReceived += 1;
-            _dispatchToNodes(_requester, _servingNode, _data);
-        }
+        address _servingNodeA = _getServingNode();
+        address _servingNodeB = _getServingNode();
+        alertRegistry[_alertID].servingNodes[0] = _servingNodeA;
+        alertRegistry[_alertID].servingNodes[1] = _servingNodeB;
+        nodeRegistry[_servingNodeA].requestsReceived += 1;
+        nodeRegistry[_servingNodeB].requestsReceived += 1;
         emit AlertDispatched(_requestID, _alertID, alertRegistry[_alertID].servingNodes);
+        _dispatchToNodes(_requester, _servingNodeA, _data);
+        _dispatchToNodes(_requester, _servingNodeB, _data);
     }
     
     //serve khronAlerts 
     function serveKhronAlert(bytes32 _alertID) external returns (bool){
         uint gasCost = gasleft();
-        uint _gasSpent;
+        uint _gasSpent = 0;
         uint gasAdjuster; // needed when there are initialization fees to pay regarding the payee;
         address _servingNode = msg.sender;
         require(_servingNode == alertRegistry[_alertID].servingNodes[0] || _servingNode == alertRegistry[_alertID].servingNodes[1], "unauthorized Node cannot solve alert");
@@ -312,7 +304,7 @@ contract KhronusCoordinatorV01 is Ownable{
             nodeRegistry[_servingNode].requestsFulfilled += 1;      
             userBalances[_operator]  == 0? gasAdjuster = 15000: gasAdjuster = 0;
             _gasSpent = gasCost - _processAlert(_alertID, _servingNode) + protocolGasConstant + gasAdjuster;
-            compensateAlert(_alertID,_clientContract,_operator, _gasSpent); 
+            _compensateAlert(_alertID,_clientContract,_operator, _gasSpent); 
         }
         else {
            nodeRegistry[_servingNode].requestsFailed += 1;
@@ -329,8 +321,9 @@ contract KhronusCoordinatorV01 is Ownable{
         if (alertRegistry[_alertID].status == alertStatus.notFulfilled){
             KhronusClientInterface  _khronusClient;
             _khronusClient = KhronusClientInterface(requestRegistry[_requestID].clientContract);
+            alertRegistry[_alertID].status = alertStatus.fulfilledOnce;
             _result = _khronusClient.khronResponse(_requestID);
-            _result ? alertRegistry[_alertID].status = alertStatus.fulfilledOnce: alertRegistry[_alertID].status = alertStatus.notFulfilled;
+            require(_result);
         }
         else{
             alertRegistry[_alertID].status = alertStatus.fulfilledTwice;
@@ -339,15 +332,15 @@ contract KhronusCoordinatorV01 is Ownable{
         return gasleft();
     }
 
-    function calculateCompensation(uint256 _gasAccounted) private returns (uint256, uint256){
+    function _calculateCompensation(uint256 _gasAccounted) private returns (uint256, uint256){
         uint256 _gasCompNtv = _gasAccounted * tx.gasprice; 
         uint256 _operatorFee = (_gasCompNtv * operatorMarkupPC) / 100; 
         uint256 _dueNtv = _gasCompNtv+ _operatorFee; 
         return (_gasCompNtv, _dueNtv); 
     }
     
-    function compensateAlert(bytes32 _alertID, address _clientContract, address _operator, uint _gasAccounted) private {
-        (uint256 _gasCompNtv, uint256 _dueNtv) = calculateCompensation(_gasAccounted); 
+    function _compensateAlert(bytes32 _alertID, address _clientContract, address _operator, uint _gasAccounted) private {
+        (uint256 _gasCompNtv, uint256 _dueNtv) = _calculateCompensation(_gasAccounted); 
         require (_dueNtv <= userBalances[_clientContract], "Client contract balance is not enough to pay for alert"); 
         userBalances[_clientContract] -= _dueNtv;
         userBalances[_operator] += _dueNtv; // TOKEN RELATED

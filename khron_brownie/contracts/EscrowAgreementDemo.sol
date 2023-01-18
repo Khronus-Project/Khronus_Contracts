@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 
 //Local Import from package source
-import "Khronus_Utils/contracts/KhronusClientBase.sol";
+//import "Khronus_Utils/contracts/KhronusClientBase.sol";
 
 //remote import from package
-//import "@khronus/khronus-utils@0.0.3/contracts/KhronusClientBase.sol";
+import "@khronus/khronus-utils@0.0.3/contracts/KhronusClientBase.sol";
 
 contract EscrowInfrastructure is KhronusClient{
 
@@ -38,6 +38,7 @@ contract EscrowInfrastructure is KhronusClient{
         address _depositor = msg.sender;
         uint256 _deposit = msg.value; 
         bytes32 _escrowID = keccak256(abi.encodePacked(_depositor, nonce));
+        nonce += 1;
         escrowRegistry[_escrowID].balance = _deposit;
         escrowRegistry[_escrowID].expiryTimestamp = _expiryTimestamp;
         escrowRegistry[_escrowID].depositor = _depositor;  
@@ -47,7 +48,6 @@ contract EscrowInfrastructure is KhronusClient{
         escrowRegistry[_escrowID].status = EscrowStatus.Open;
         bytes32 _requestID = clientRequestKhronTab(_expiryTimestamp, 1, 0);
         tabRegistry[_requestID] = _escrowID;
-        nonce += 1;
         emit EscrowCreated(_depositor, _escrowID, _expiryTimestamp, _deposit);
         return _escrowID;
     }
@@ -61,14 +61,14 @@ contract EscrowInfrastructure is KhronusClient{
     function khronProcessAlert(bytes32 _requestID) override internal returns (bool){
         bytes32 _escrowID = tabRegistry[_requestID];
         if (escrowRegistry[_escrowID].condition){
+            payable(escrowRegistry[_escrowID].beneficiary).transfer(escrowRegistry[_escrowID].balance);
             escrowRegistry[_escrowID].balance = 0;
             escrowRegistry[_escrowID].status = EscrowStatus.Expired;
-            payable(escrowRegistry[_escrowID].beneficiary).transfer(escrowRegistry[_escrowID].balance);
         }
         else{
+            payable(escrowRegistry[_escrowID].depositor).transfer(escrowRegistry[_escrowID].balance);
             escrowRegistry[_escrowID].balance = 0;
             escrowRegistry[_escrowID].status = EscrowStatus.Expired;
-            payable(escrowRegistry[_escrowID].depositor).transfer(escrowRegistry[_escrowID].balance);
         }
         emit EscrowExpired(_escrowID, block.timestamp, escrowRegistry[_escrowID].condition);
         return true;
