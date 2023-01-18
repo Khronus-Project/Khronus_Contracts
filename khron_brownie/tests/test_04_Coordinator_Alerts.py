@@ -11,7 +11,7 @@ def constants01():
 @pytest.fixture
 def current_utc_timestamp():
     return int(datetime.now(timezone.utc).timestamp())
-"""
+
 def test_alert_operation_happyPath01(constants01, current_utc_timestamp): 
     # Set up constants for testing
     coordinator_contract = constants01["Coordinator_Contract"]
@@ -63,12 +63,10 @@ def test_alert_operation_happyPath01(constants01, current_utc_timestamp):
     # Assertion
     assert coordinator_contract.getBalanceOf(client_contract.address) == balance_client - (compensation_0 + compensation_1)
     assert escrow_beneficiary.balance() == eth_balance_beneficiary + escrow_amount
-    #assert compensation_0 <= expected_eth_0 + eth_band_of_tolerance and  compensation_0 >= expected_eth_0  
-    #assert compensation_1 <= expected_eth_1 + eth_band_of_tolerance and  compensation_1 >= expected_eth_1 
+    assert compensation_0 <= expected_eth_0 + eth_band_of_tolerance and  compensation_0 >= expected_eth_0  
+    assert compensation_1 <= expected_eth_1 + eth_band_of_tolerance and  compensation_1 >= expected_eth_1 
 
-
-
-
+"""
 def test_alert_operation_serve_twice_same_node(constants01, current_utc_timestamp): 
     # Set up constants for testing
     coordinator_contract = constants01["Coordinator_Contract"]
@@ -122,9 +120,6 @@ def test_alert_operation_serve_twice_same_node(constants01, current_utc_timestam
     #assert compensation_khron_0 <= expected_khron_0 + khron_band_of_tolerance and  compensation_khron_0 >= expected_khron_0  
     assert data_1 == "VM Exception while processing transaction: revert Alert was already served by this node"
 
-"""
-
-
 def test_operator_withdrawal_happyPath(constants01, current_utc_timestamp): 
     # Set up constants for testing
     coordinator_contract = constants01["Coordinator_Contract"]
@@ -175,3 +170,4 @@ def test_operator_withdrawal_happyPath(constants01, current_utc_timestamp):
     # Assertion
     #assert token_contract.balanceOf(operators[0].address) == compensation_khron_0
     #assert token_contract.balanceOf(operators[1].address) == compensation_khron_1
+"""

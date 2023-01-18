@@ -1,24 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "../interfaces/KhronusNodeInterface.sol";
+import "../interfaces/KhronusClientInterface.sol";
 import "OpenZeppelin/openzeppelin-contracts@4.5.0/contracts/access/Ownable.sol";
 import "@khronus/time-cog@1.0.2/contracts/src/KhronusTimeCog.sol";
 
-
-interface KhronusNodeInterface {
-    function broadcast(address requester, bytes memory _data) external;
-}
-
-interface KhronusClientInterface {
-   
-    // Interface Functions
-    // Only owner and internal functions are not provided
-    function khronResponse(bytes32 _requestID) external returns (bool);
-
-}
-
 contract KhronusCoordinatorV01 is Ownable{
-
+    
     //interface declaration
 
     KhronusClientInterface private khronusClient;
