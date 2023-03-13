@@ -1,18 +1,26 @@
 # Khronus Protocol Contracts
 ## Description
-The Khronus protocols is made of two parts, the contracts and the node application. This repository hosts the contracts. 
-## Contracts
-The Khronus protocol contracts are the following.
-- Token Contract: The token contract deploys the Khron token, the Khron token is an ERC20 token that implements the ERC677 token interface which makes it capable of transmiting data upon token transfer. For this the recipient contract has to implement the onTokenTransfer function defined in the ERC677 Receiver interface. 
-- Node Contract (abstract): The Node contract is an abstract contract designed to be implemented by all Khronus nodes it provides the functionality to process the data transmitted by the Khron token. It is an abstract contract, this means it is not implemented by itself, it is implemented by the node_test.sol contract which inherits all its functionality for development and testing purposes.
-- Client Contract (abstract): The Client contract is an abstract contract designed to be implemented by smart contracts that wish to make use of the Khronus protocol. It is an abstract contract, this means it is not implemented by itself, it is implemented by the client_test.sol contract which inherits all its functionality for development and testing purposes.
+The Khronus protocols is made of two parts:
+- The protocol contracts
+    - Protocol contracts in turn are divided in:
+        - Utility contracts:
+            - Khronus Client Base
+            - Khronus Node Base
+        - These are Contracts that are inherited by all client contracts and node operator contracts.
+        - The utilities are maintained in the following repository.
+            - https://github.com/Khronus-Project/Khronus_utils
+        - Protocol Contracts
+            - Khronus Coordinator:
+                This contract is the heart of the protocol and lives here.
+            - Demo Contracts:
+                These are contracts that serve to test the Coordinator contract, two mock client contracts and one mock node operator contract. These also live here.
+- The node application
+    - This is the validator that app that serves alerts. It can be found in the following repository:
+        - https://github.com/Khronus-Project/Khronus_Node 
+
 ## The development environment
 - The khronus contracts are developed under brownie-eth the python framework for web3 development. The contracts are written in solidity but all interactions with the contracts is supported by Python and Python web3 library. 
-- To install the contracts development environment clone this repository, create a virtual environment and then install the requirements.txt dependencies.
+- To install the contracts development environment clone this repository, create a virtual environment and then install eth-brownie.
 - The khron_brownie folder contains all the contracts. To interact with the contracts you need an Ethereum compatible network, either in a real testnet or through a local mock network through Ganache https://www.trufflesuite.com/ganache. 
 - To install ganache and connected to the brownie environent follow the steps in the following video. https://www.youtube.com/watch?v=yJQJ7pw_9C0
-- Once the network is configured the scripts to interact with the current demo will work. First run the 'brownie run event_prep.py' and then "brownie run send_events.py" you will see the logs of the transaction shown, if the node application is active, and listening to the right contract address the listener will react accordingly populating its database.
-- Every time that the 'brownie run event_prep.py' command runs the file contract_addresses in contract_library populates with the updated addresses that contain the current contracts, the node address needs to be copied to the .env file of the node application.
-- The folder Contract_Library/ROPSTEN_DEPLOYMENTS and the other scripts are related to deployments in live testnets and not relevant to the development environment.
-- The file contract_addresses in contract_library populates 
-- The listner repository should be created under the same parent directory as the Contract repository for the demo to work properly.
+- Once the network is configured the scripts and tests to interact with the contracts will work. 
