@@ -15,7 +15,7 @@ The Khronus protocols is made of two parts:
             - Demo Contracts:
                 These are contracts that serve to test the Coordinator contract, two mock client contracts and one mock node operator contract. These also live here.
 - The node application
-    - This is the validator that app that serves alerts. It can be found in the following repository:
+    - This is the validator app that serves alerts. It can be found in the following repository:
         - https://github.com/Khronus-Project/Khronus_Node 
 
 ## The development environment
