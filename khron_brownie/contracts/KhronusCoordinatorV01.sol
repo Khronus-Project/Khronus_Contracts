@@ -1,19 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../interfaces/KhronusNodeInterface.sol";
-import "../interfaces/KhronusClientInterface.sol";
-import "OpenZeppelin/openzeppelin-contracts@4.5.0/contracts/access/Ownable.sol";
-import "@khronus/time-cog@1.0.2/contracts/src/KhronusTimeCog.sol";
+import {KhronusNodeInterface} from "../interfaces/KhronusNodeInterface.sol";
+import {KhronusClientInterface} from "../interfaces/KhronusClientInterface.sol";
+import {Ownable} from "OpenZeppelin/openzeppelin-contracts@4.5.0/contracts/access/Ownable.sol";
+import {KhronusTimeCog} from "@khronus/time-cog@1.0.2/contracts/src/KhronusTimeCog.sol";
 
 contract KhronusCoordinatorV01 is Ownable{
-    
-    //interface declaration
-
-    KhronusClientInterface private khronusClient;
-    KhronusNodeInterface private khronNode;
-    
-
 
     /* Events
      * Classified in events triggered on configuration changes and operational events 
@@ -131,7 +124,7 @@ contract KhronusCoordinatorV01 is Ownable{
     constructor (uint256 _registrationDeposit, uint256 _bandOfTolerance) {
         registrationDeposit = _registrationDeposit; 
         bandOfTolerance = 1 minutes * _bandOfTolerance;
-        protocolGasConstant = 45560; //current platform standard gas execution
+        protocolGasConstant = 46940; //current platform standard gas execution
         operatorMarkupPC = 10;
         minimumClientBalance = 0.3*1e18; 
     }
@@ -180,8 +173,10 @@ contract KhronusCoordinatorV01 is Ownable{
     }
     
     function fundClient(address _clientContract) external payable {
+        require(clientRegistry[_clientContract].owner != address(0), "contract is not registered");
         uint _deposit = msg.value;
         address _ownerAddress = msg.sender;
+        require(_deposit > 0, "Amount funded should be greater than 0");
         require (clientRegistry[_clientContract].owner == _ownerAddress, "only owner can fund"); 
         userBalances[_clientContract] += _deposit;
         emit ClientFunded(_clientContract, _ownerAddress, _deposit);
@@ -209,6 +204,7 @@ contract KhronusCoordinatorV01 is Ownable{
     function requestKhronTab(uint256 _timestamp, uint256 _iterations, uint256 _step) external returns(bytes32){
         uint _gasCost = gasleft(); //For measuring gas
         address _requester = msg.sender;
+        require(clientRegistry[_requester].owner != address(0), "Requester contract is not registered");
         require (_isValidKhronTimestamp(_timestamp), "timestamp granularity should be on integer minutes, your timestamp was not generated through the standard functionality on client contract or you overrode the function");
         require (_iterations == 1, "request should have one iteration on beta" );
         require (_step == 0, "step defaults to 0 on beta" );
@@ -249,7 +245,7 @@ contract KhronusCoordinatorV01 is Ownable{
         }
     }
 
-    function _isAlertCorrect(bytes32 _alertID) private returns (bool){
+    function _isAlertCorrect(bytes32 _alertID) private view returns (bool){
         uint256 _current = block.timestamp;
         uint256 _target = alertRegistry[_alertID].timestamp;
         if (_current >= _target && _current <=_target + bandOfTolerance){
@@ -289,7 +285,8 @@ contract KhronusCoordinatorV01 is Ownable{
     }
     
     //serve khronAlerts 
-    function serveKhronAlert(bytes32 _alertID) external returns (bool){
+    function serveKhronAlert(bytes32 _alertID) external {
+        require(alertRegistry[_alertID].requestID != 0, "The served alert ID doesn't exist");
         uint gasCost = gasleft();
         uint _gasSpent = 0;
         uint gasAdjuster; // needed when there are initialization fees to pay regarding the payee;
@@ -312,7 +309,6 @@ contract KhronusCoordinatorV01 is Ownable{
         }
         gasCost -= gasleft();
         emit WorkflowCompleted(_alertID, gasCost, _gasSpent, tx.gasprice);
-        return true;
     }
 
     function _processAlert(bytes32 _alertID, address _servingNode) private returns (uint) {
@@ -332,7 +328,7 @@ contract KhronusCoordinatorV01 is Ownable{
         return gasleft();
     }
 
-    function _calculateCompensation(uint256 _gasAccounted) private returns (uint256, uint256){
+    function _calculateCompensation(uint256 _gasAccounted) private view returns (uint256, uint256){
         uint256 _gasCompNtv = _gasAccounted * tx.gasprice; 
         uint256 _operatorFee = (_gasCompNtv * operatorMarkupPC) / 100; 
         uint256 _dueNtv = _gasCompNtv+ _operatorFee; 
@@ -362,11 +358,11 @@ contract KhronusCoordinatorV01 is Ownable{
     
     function withdrawBalance (uint _amount) external {
         address payable _user = payable(msg.sender);
-        uint _balance = userBalances[msg.sender];// TOKEN RELATED
+        uint _balance = userBalances[msg.sender];
         require (_amount <= _balance, "not enough balance to withdraw requested amount");
         userBalances[_user] -= _amount;
-        _user.transfer(_amount);
         emit BalanceWithdrawn(msg.sender, block.timestamp, _amount);
+        _user.transfer(_amount); 
     } 
 
 

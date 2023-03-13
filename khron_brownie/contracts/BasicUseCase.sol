@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 //Local Import from package source
 //import "Khronus_Utils/contracts/KhronusClientBase.sol";
 //Remote Import
-import "@khronus/khronus-utils@0.0.4/contracts/KhronusClientBase.sol";
+import "@khronus/khronus-utils@0.0.7/contracts/KhronusClientBase.sol";
 
 contract BasicClient is KhronusClient{
 
@@ -20,8 +20,8 @@ contract BasicClient is KhronusClient{
 
     function setTab(uint256 _expiryTimestamp) external returns (bytes32){
         bytes32 _requestID = clientRequestKhronTab(_expiryTimestamp, 1, 0);
-        return _requestID;
         emit Requested(_requestID, block.timestamp);
+        return _requestID;
     }
     
     function khronProcessAlert(bytes32 _requestID) override internal returns (bool){

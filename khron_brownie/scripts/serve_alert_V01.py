@@ -23,7 +23,6 @@ def main():
     node_contract = TestKhronusNode01.at(addresses["KhronusNode_0"])
     txt_request = client_contract.openEscrow(escrow_beneficiary, timestamp, agent, {"from":escrow_depositor, "value":"1 ether"})
     alert_ID = txt_request.events['AlertDispatched']['alertID']
-    test_request = coordinator_contract.getAlertRequest(alert_ID)
     print(f"Escrow ID is {txt_request.events['EscrowCreated']['escrowID']}")
     print(f"Initial status of Escrow is {client_contract.getStatus(txt_request.events['EscrowCreated']['escrowID'])}")
     print(f"Initial balance of Escrow is {client_contract.getBalance(txt_request.events['EscrowCreated']['escrowID'])}")
@@ -32,12 +31,13 @@ def main():
     print(f"Condition of Escrow is {client_contract.getCondition(txt_request.events['EscrowCreated']['escrowID'])}")
     sleep(60)
     print(f"Alert was fulfilled at {current_closest_minute()}")
-    try: 
-        txt_serve =node_contract.fulfillAlert(alert_ID, {'from':mock_node})
-        print(txt_serve.events)
-        print(f'Workflow completed cost is {txt_serve.events["WorkflowCompleted"]["gasCost"]}')
-        print(f'Estimated gas cost is {txt_serve.events["WorkflowCompleted"]["accountedGas"]}')
-    except Exception as e:
-        print(e)
-    print(f"Status of Escrow after fulfillment is {client_contract.getStatus(txt_request.events['EscrowCreated']['escrowID'])}")
-    print(test_request, alert_ID, txt_serve.return_value)
+    #try: 
+    txt_serve = node_contract.fulfillAlert(alert_ID, {'from':mock_node})
+    txt_serve.call_trace()
+        #print(txt_serve.info)
+        #print(f'Workflow completed cost is {txt_serve.events["WorkflowCompleted"]["gasCost"]}')
+        #print(f'Estimated gas cost is {txt_serve.events["WorkflowCompleted"]["accountedGas"]}')
+    #except Exception as e:
+       #print(e.message)
+    # print(f"Status of Escrow after fulfillment is {client_contract.getStatus(txt_request.events['EscrowCreated']['escrowID'])}")
+    # print(test_request, alert_ID, txt_serve.return_value)

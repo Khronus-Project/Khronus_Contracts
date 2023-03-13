@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 //Local Import from package source
 //import "Khronus_Utils/contracts/KhronusClientBase.sol";
 //remote import from package
-import "@khronus/khronus-utils@0.0.4/contracts/KhronusClientBase.sol";
+import "@khronus/khronus-utils@0.0.7/contracts/KhronusClientBase.sol";
 
 contract EscrowInfrastructure is KhronusClient{
 
@@ -59,17 +59,13 @@ contract EscrowInfrastructure is KhronusClient{
     
     function khronProcessAlert(bytes32 _requestID) override internal returns (bool){
         bytes32 _escrowID = tabRegistry[_requestID];
-        if (escrowRegistry[_escrowID].condition){
-            payable(escrowRegistry[_escrowID].beneficiary).transfer(escrowRegistry[_escrowID].balance);
-            escrowRegistry[_escrowID].balance = 0;
-            escrowRegistry[_escrowID].status = EscrowStatus.Expired;
-        }
-        else{
-            payable(escrowRegistry[_escrowID].depositor).transfer(escrowRegistry[_escrowID].balance);
-            escrowRegistry[_escrowID].balance = 0;
-            escrowRegistry[_escrowID].status = EscrowStatus.Expired;
-        }
+        uint256 _balance = escrowRegistry[_escrowID].balance;
+        address payable _recipient;
+        escrowRegistry[_escrowID].condition ? _recipient = payable(escrowRegistry[_escrowID].beneficiary): _recipient = payable(escrowRegistry[_escrowID].depositor);
+        escrowRegistry[_escrowID].balance = 0;
+        escrowRegistry[_escrowID].status = EscrowStatus.Expired;
         emit EscrowExpired(_escrowID, block.timestamp, escrowRegistry[_escrowID].condition);
+        _recipient.transfer(_balance);
         return true;
     }
 
@@ -99,17 +95,13 @@ contract EscrowInfrastructure is KhronusClient{
 
     function expiryManually(bytes32 _escrowID) external payable returns(bool) {
         require(block.timestamp >= escrowRegistry[_escrowID].expiryTimestamp,"require timestamp has passed to manually expire");
-        if (escrowRegistry[_escrowID].condition){
-            payable(escrowRegistry[_escrowID].beneficiary).transfer(escrowRegistry[_escrowID].balance);
-            escrowRegistry[_escrowID].balance = 0;
-            escrowRegistry[_escrowID].status = EscrowStatus.Expired;
-        }
-        else{
-            payable(escrowRegistry[_escrowID].depositor).transfer(escrowRegistry[_escrowID].balance);
-            escrowRegistry[_escrowID].balance = 0;
-            escrowRegistry[_escrowID].status = EscrowStatus.Expired;
-        }
+        uint256 _balance = escrowRegistry[_escrowID].balance;
+        address payable _recipient;
+        escrowRegistry[_escrowID].condition ? _recipient = payable(escrowRegistry[_escrowID].beneficiary): _recipient = payable(escrowRegistry[_escrowID].depositor);
+        escrowRegistry[_escrowID].balance = 0;
+        escrowRegistry[_escrowID].status = EscrowStatus.Expired;
         emit EscrowExpired(_escrowID, block.timestamp, escrowRegistry[_escrowID].condition);
+        _recipient.transfer(_balance);
         return true;
     }
 }
